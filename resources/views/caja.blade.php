@@ -464,15 +464,11 @@
 
                     <div class="checkout-summary">
                         <div class="summary-row small">
-                            <span>Productos</span>
-                            <span id="checkoutItemsCount">0</span>
+                            <span>Operaciones Gravadas</span>
+                            <span id="checkoutTaxable">S/ 0.00</span>
                         </div>
                         <div class="summary-row small">
-                            <span>Sub total</span>
-                            <span id="checkoutSubtotal">S/ 0.00</span>
-                        </div>
-                        <div class="summary-row small">
-                            <span>Impuesto 1.5%</span>
+                            <span>IGV (18%)</span>
                             <span id="checkoutTax">S/ 0.00</span>
                         </div>
                         <div class="summary-row checkout-total">
@@ -504,8 +500,7 @@
     const products        = Array.from(document.querySelectorAll('#productGrid .product-row'));
     const checkoutList    = document.getElementById('checkoutList');
     const checkoutEmpty   = document.getElementById('checkoutEmpty');
-    const checkoutItemsCount = document.getElementById('checkoutItemsCount');
-    const checkoutSubtotal   = document.getElementById('checkoutSubtotal');
+    const checkoutTaxable    = document.getElementById('checkoutTaxable');
     const checkoutTax        = document.getElementById('checkoutTax');
     const checkoutTotal      = document.getElementById('checkoutTotal');
     const paymentMethods     = document.getElementById('paymentMethods');
@@ -546,13 +541,13 @@
             checkoutList.appendChild(checkoutEmpty);
         }
 
-        const tax   = subtotal * 0.015;
-        const total = subtotal + tax;
+        const gravada = subtotal / 1.18;
+        const tax     = subtotal - gravada;
+        const total   = subtotal;
 
-        checkoutItemsCount.textContent = totalItems;
-        checkoutSubtotal.textContent   = formatPrice(subtotal);
-        checkoutTax.textContent        = formatPrice(tax);
-        checkoutTotal.textContent      = formatPrice(total);
+        checkoutTaxable.textContent = formatPrice(gravada);
+        checkoutTax.textContent     = formatPrice(tax);
+        checkoutTotal.textContent   = formatPrice(total);
     }
 
     function applyFilters() {
