@@ -17,6 +17,7 @@ class Venta extends Model
         'items',
         'total',
         'metodo_pago',
+        'tipo_comprobante',
         'estado',
     ];
 

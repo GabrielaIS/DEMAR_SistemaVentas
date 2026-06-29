@@ -28,8 +28,9 @@
             font-family: "Segoe UI", Roboto, Arial, sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(78, 205, 196, 0.22), transparent 30%),
-                linear-gradient(135deg, var(--deep) 0%, var(--mid) 50%, var(--teal) 100%);
+                radial-gradient(circle at 12% 14%, rgba(78, 205, 196, 0.24), transparent 26%),
+                radial-gradient(circle at 82% 78%, rgba(198, 149, 78, 0.22), transparent 28%),
+                linear-gradient(135deg, var(--deep) 0%, var(--mid) 48%, var(--teal) 100%);
             display: grid;
             place-items: center;
             padding: 24px;
@@ -39,17 +40,56 @@
             width: min(100%, 460px);
             background: var(--panel);
             border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 24px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+            position: relative;
+        }
+
+        .login-shell::before {
+            content: "";
+            display: block;
+            height: 8px;
+            background: linear-gradient(90deg, var(--gold), var(--aqua), var(--teal));
         }
 
         .form-panel {
-            padding: 46px 40px;
+            padding: 42px 40px 40px;
             background: linear-gradient(180deg, #fff 0%, var(--cream) 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
+        }
+
+        .brand-lockup {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+
+        .brand-logo {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #fff;
+            object-fit: cover;
+            box-shadow: 0 14px 28px rgba(9, 25, 46, 0.12);
+        }
+
+        .brand-name {
+            color: var(--deep);
+            font-size: 1.2rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .brand-subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 600;
         }
 
         .form-kicker {
@@ -88,7 +128,7 @@
             width: 100%;
             height: 50px;
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 10px;
             padding: 0 14px;
             color: var(--text);
             font: inherit;
@@ -107,7 +147,7 @@
             width: 100%;
             height: 52px;
             border: 0;
-            border-radius: 14px;
+            border-radius: 10px;
             background: linear-gradient(135deg, var(--teal) 0%, var(--aqua) 100%);
             color: #fff;
             font: inherit;
@@ -124,7 +164,7 @@
 
         .error-box {
             border: 1px solid rgba(192,57,43,0.24);
-            border-radius: 12px;
+            border-radius: 10px;
             background: rgba(192,57,43,0.08);
             color: var(--danger);
             padding: 12px 14px;
@@ -157,6 +197,7 @@
             body { padding: 0; }
             .login-shell { min-height: 100vh; border-radius: 0; }
             .brand-panel, .form-panel { padding: 28px 22px; }
+            .brand-lockup { margin-bottom: 22px; }
             .helper-row { flex-direction: column; }
         }
     </style>
@@ -164,6 +205,14 @@
 <body>
     <main class="login-shell">
         <section class="form-panel" aria-label="Inicio de sesión">
+            <div class="brand-lockup">
+                <img class="brand-logo" src="{{ asset('Logo.png') }}" alt="DEMAR">
+                <div>
+                    <div class="brand-name">DEMAR</div>
+                    <div class="brand-subtitle">Sistema de ventas</div>
+                </div>
+            </div>
+
             <div class="form-kicker">Acceso autorizado</div>
             <h2 class="form-title">Iniciar sesión</h2>
             <p class="form-text">Ingresa tu usuario y contraseña para entrar al sistema.</p>
