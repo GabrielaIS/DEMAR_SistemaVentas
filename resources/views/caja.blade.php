@@ -284,6 +284,19 @@
             font-size: 0.9rem;
         }
 
+        .stock-pill.low-stock {
+            background: rgba(192, 57, 43, 0.12);
+            color: var(--danger);
+            box-shadow: inset 0 0 0 1px rgba(192, 57, 43, 0.18);
+        }
+
+        .stock-warning {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--danger);
+        }
+
         .quantity-wrapper {
             display: flex;
             align-items: center;
@@ -767,6 +780,7 @@
                                             if (strtolower($product->categoria ?? '') === 'collar') {
                                                 $imageUrl = $imagePath ? asset($imagePath) : asset('collares/collar1.png');
                                             }
+                                            $isLowStock = (int) ($product->stock ?? 0) <= 5;
                                         @endphp
                                         <tr class="product-row"
                                             data-name="{{ strtolower($product->nombre) }}"
@@ -783,7 +797,12 @@
                                                 <div class="muted">{{ ucfirst($product->categoria ?? '') }}</div>
                                             </td>
                                             <td class="price">S/ {{ number_format($product->precio ?? 0, 2) }}</td>
-                                            <td><span class="stock-pill">{{ $product->stock }}</span></td>
+                                            <td>
+                                                <span class="stock-pill{{ $isLowStock ? ' low-stock' : '' }}">{{ $product->stock }}</span>
+                                                @if($isLowStock)
+                                                    <div class="stock-warning">¡Pocas unidades!</div>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <div class="quantity-wrapper">
                                                     <button type="button" class="qty-btn" data-action="decrease">-</button>
