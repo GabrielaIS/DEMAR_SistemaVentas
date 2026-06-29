@@ -36,7 +36,7 @@ class CajaController extends Controller
             return [
                 'documento' => $client->documento,
                 'nombre' => $client->razon_social,
-                'contacto' => $client->contacto,
+                'telefono' => $client->telefono,
             ];
         })->values();
 
@@ -59,6 +59,12 @@ class CajaController extends Controller
             return redirect()->route('admin');
         }
 
+        $request->merge([
+            'telefono' => $request->filled('telefono')
+                ? $request->input('telefono')
+                : $request->input('telefono_juridico'),
+        ]);
+
         $request->validate([
             'products' => 'nullable|array',
             'payment_method' => 'nullable|string',
@@ -68,7 +74,7 @@ class CajaController extends Controller
             'nombres_apellidos' => 'nullable|string|max:255',
             'razon_social' => 'nullable|string|max:255',
             'telefono' => 'nullable|string|max:30',
-            'contacto' => 'nullable|string|max:255',
+            'telefono_juridico' => 'nullable|string|max:30',
         ]);
 
         $selected = $request->input('products', []);
@@ -163,13 +169,13 @@ class CajaController extends Controller
                 if (! $cliente) {
                     $data = $request->validate([
                         'razon_social' => 'required|string|max:255',
-                        'contacto' => 'required|string|max:255',
+                        'telefono' => 'required|string|max:30',
                     ]);
 
                     $cliente = ClienteJuridico::create([
                         'documento' => $documento,
                         'razon_social' => $data['razon_social'],
-                        'contacto' => $data['contacto'],
+                        'telefono' => $data['telefono'],
                     ]);
                 }
 
@@ -213,7 +219,7 @@ class CajaController extends Controller
                     'tipo' => 'juridico',
                     'razon_social' => $cliente->razon_social,
                     'documento' => $cliente->documento,
-                    'contacto' => $cliente->contacto,
+                    'telefono' => $cliente->telefono,
                 ];
             }
         }

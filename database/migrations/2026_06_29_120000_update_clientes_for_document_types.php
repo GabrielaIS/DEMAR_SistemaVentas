@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('documento', 11)->nullable()->unique()->after('tipo');
             $table->string('nombres_apellidos')->nullable()->after('nombre');
             $table->string('razon_social')->nullable()->after('nombres_apellidos');
-            $table->string('contacto')->nullable()->after('telefono');
         });
     }
 
@@ -32,7 +31,6 @@ return new class extends Migration
                 'documento',
                 'nombres_apellidos',
                 'razon_social',
-                'contacto',
             ]);
         });
     }

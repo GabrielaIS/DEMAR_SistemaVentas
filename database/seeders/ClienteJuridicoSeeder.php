@@ -16,17 +16,17 @@ class ClienteJuridicoSeeder extends Seeder
             [
                 'documento' => '20605487912',
                 'razon_social' => 'Boutique Arena SAC',
-                'contacto' => 'compras@boutiquearena.pe',
+                'telefono' => '987654321',
             ],
             [
                 'documento' => '20478963215',
                 'razon_social' => 'Regalos Lima Norte EIRL',
-                'contacto' => '945612378',
+                'telefono' => '945612378',
             ],
             [
                 'documento' => '20145896327',
                 'razon_social' => 'Distribuidora Azul Marino SAC',
-                'contacto' => 'ventas@azulmarino.pe',
+                'telefono' => '956123789',
             ],
         ];
 

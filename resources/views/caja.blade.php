@@ -878,8 +878,8 @@
                                 <input id="razon_social" name="razon_social" type="text" placeholder="Razon social">
                             </div>
                             <div>
-                                <label for="contacto">Contacto</label>
-                                <input id="contacto" name="contacto" type="text" placeholder="Contacto">
+                                <label for="telefono_juridico">Telefono</label>
+                                <input id="telefono_juridico" name="telefono_juridico" type="text" placeholder="Telefono">
                             </div>
                         </div>
                     </div>
@@ -958,8 +958,8 @@
     const juridicoFields = document.getElementById('juridicoFields');
     const nombresInput = document.getElementById('nombres_apellidos');
     const telefonoInput = document.getElementById('telefono');
+    const telefonoJuridicoInput = document.getElementById('telefono_juridico');
     const razonInput = document.getElementById('razon_social');
-    const contactoInput = document.getElementById('contacto');
     const cashBox = document.getElementById('cashBox');
     const cashReceivedInput = document.getElementById('cash_received');
     const cashChange = document.getElementById('cashChange');
@@ -1016,7 +1016,7 @@
             return '';
         }
 
-        return sanitizePhone(receipt.cliente.telefono || receipt.cliente.contacto || '');
+        return sanitizePhone(receipt.cliente.telefono || '');
     }
 
     function buildReceiptPdf(receipt) {
@@ -1082,10 +1082,10 @@
         if (receipt.cliente) {
             doc.setFont('helvetica', 'bold');
             doc.text(receipt.tipo_comprobante === 'factura' ? 'RUC:' : 'DNI:', 78, 285);
-            doc.text(receipt.tipo_comprobante === 'factura' ? 'Contacto:' : 'Telefono:', 338, 285);
+            doc.text('Telefono:', 338, 285);
             doc.setFont('helvetica', 'normal');
             doc.text(String(receipt.cliente.documento || ''), 142, 285);
-            doc.text(String(receipt.cliente.contacto || receipt.cliente.telefono || ''), 410, 285);
+            doc.text(String(receipt.cliente.telefono || ''), 410, 285);
         }
 
         const tableTop = receipt.cliente ? 330 : 300;
@@ -1216,8 +1216,8 @@
         juridicoFields.classList.remove('active');
         setRequired(nombresInput, false);
         setRequired(telefonoInput, false);
+        setRequired(telefonoJuridicoInput, false);
         setRequired(razonInput, false);
-        setRequired(contactoInput, false);
     }
 
     function updateCustomerFlow() {
@@ -1246,9 +1246,7 @@
 
         if (found) {
             foundClient.classList.add('active');
-            foundClient.textContent = type === 'boleta'
-                ? `${found.nombre} - ${found.telefono || 'Sin telefono'}`
-                : `${found.nombre} - ${found.contacto || 'Sin contacto'}`;
+            foundClient.textContent = `${found.nombre} - ${found.telefono || 'Sin telefono'}`;
             return;
         }
 
@@ -1260,7 +1258,7 @@
             } else {
                 juridicoFields.classList.add('active');
                 setRequired(razonInput, true);
-                setRequired(contactoInput, true);
+                setRequired(telefonoJuridicoInput, true);
             }
         }
     }

@@ -18,7 +18,6 @@ class Cliente extends Model
         'nombres_apellidos',
         'razon_social',
         'telefono',
-        'contacto',
     ];
 
     public function getNombreMostrableAttribute(): string
