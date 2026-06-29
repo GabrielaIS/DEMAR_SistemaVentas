@@ -27,7 +27,17 @@ class CajaController extends Controller
                 return redirect()->route('admin');
             }
 
-            return redirect()->intended('/caja');
+            if ($user && ($user->rol ?? null) === 'cajero') {
+                return redirect()->route('caja');
+            }
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'email' => 'Tu usuario no tiene un rol autorizado.',
+            ]);
         }
 
         return back()->withErrors([
@@ -44,8 +54,29 @@ class CajaController extends Controller
         return redirect('/');
     }
 
+    public function admin()
+    {
+        if (! Auth::check()) {
+            return redirect()->route('sistema.login');
+        }
+
+        if ((Auth::user()->rol ?? null) !== 'admin') {
+            return redirect()->route('caja');
+        }
+
+        return view('admin');
+    }
+
     public function index()
     {
+        if (! Auth::check()) {
+            return redirect()->route('sistema.login');
+        }
+
+        if ((Auth::user()->rol ?? null) !== 'cajero') {
+            return redirect()->route('admin');
+        }
+
         $products = Producto::where('stock', '>', 0)->get();
         $clients = Cliente::orderBy('nombre')->get();
 
@@ -54,6 +85,14 @@ class CajaController extends Controller
 
     public function vender(Request $request)
     {
+        if (! Auth::check()) {
+            return redirect()->route('sistema.login');
+        }
+
+        if ((Auth::user()->rol ?? null) !== 'cajero') {
+            return redirect()->route('admin');
+        }
+
         $request->validate([
             'products' => 'nullable|array',
             'client_id' => 'nullable|exists:clientes,id',
