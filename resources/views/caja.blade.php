@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja DEMAR</title>
+    <link rel="icon" type="image/png" href="{{ asset('Logo.png') }}">
     <style>
         :root {
             --deep: #09192e;
@@ -412,6 +413,31 @@
             font-weight: 900;
         }
 
+        .cash-box {
+            display: none;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid rgba(40, 122, 122, 0.22);
+            border-radius: 8px;
+            background: #f4fbf9;
+        }
+
+        .cash-box.active {
+            display: grid;
+        }
+
+        .cash-change {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            color: var(--deep);
+            font-weight: 900;
+        }
+
+        .cash-change span:last-child {
+            color: var(--teal);
+        }
+
         .segmented {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -511,6 +537,113 @@
             transform: translateY(-1px);
         }
 
+        .receipt-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            background: rgba(9, 25, 46, 0.72);
+        }
+
+        .receipt-overlay.active {
+            display: flex;
+        }
+
+        .receipt-panel {
+            position: relative;
+            width: min(1180px, 100%);
+            max-height: calc(100vh - 44px);
+            overflow: auto;
+            border-radius: 8px;
+            background: #fff;
+            padding: 28px 34px 32px;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+        }
+
+        .receipt-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 38px;
+            height: 38px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--deep);
+            font-size: 1.35rem;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .receipt-title {
+            text-align: center;
+            color: var(--deep);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 400;
+            line-height: 1.05;
+        }
+
+        .receipt-subtitle {
+            margin-top: 12px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .pdf-frame-wrap {
+            margin-top: 26px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(9, 25, 46, 0.14);
+            background: #303030;
+        }
+
+        .pdf-frame {
+            display: block;
+            width: 100%;
+            height: min(58vh, 640px);
+            border: 0;
+            background: #303030;
+        }
+
+        .receipt-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 26px;
+        }
+
+        .receipt-action {
+            min-height: 56px;
+            border: 0;
+            border-radius: 999px;
+            color: var(--deep);
+            font: inherit;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .receipt-action.download {
+            background: linear-gradient(135deg, var(--teal), var(--aqua));
+        }
+
+        .receipt-action.whatsapp {
+            background: #25d366;
+        }
+
+        .receipt-note {
+            margin-top: 18px;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.45;
+        }
+
         @media (max-width: 1120px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -543,8 +676,17 @@
             }
 
             .payment-methods,
-            .field-grid {
+            .field-grid,
+            .receipt-actions {
                 grid-template-columns: 1fr;
+            }
+
+            .receipt-panel {
+                padding: 24px 18px;
+            }
+
+            .pdf-frame {
+                height: 56vh;
             }
         }
     </style>
@@ -733,6 +875,17 @@
                         <input type="hidden" name="payment_method" id="payment_method" value="efectivo">
                     </div>
 
+                    <div class="cash-box active" id="cashBox">
+                        <div>
+                            <label for="cash_received">Pag&oacute; con</label>
+                            <input id="cash_received" name="cash_received" type="number" min="0" step="0.10" placeholder="0.00">
+                        </div>
+                        <div class="cash-change">
+                            <span>Vuelto</span>
+                            <span id="cashChange">S/ 0.00</span>
+                        </div>
+                    </div>
+
                     <button class="btn-pay" type="submit">Pagar</button>
                 </aside>
             </div>
@@ -740,9 +893,29 @@
     </div>
 </div>
 
+@if(session('receipt'))
+    <div class="receipt-overlay active" id="receiptOverlay" aria-modal="true" role="dialog" aria-labelledby="receiptTitle">
+        <div class="receipt-panel">
+            <button class="receipt-close" type="button" id="closeReceipt" aria-label="Cerrar comprobante">&times;</button>
+            <h2 class="receipt-title" id="receiptTitle">Compra realizada con &eacute;xito</h2>
+            <p class="receipt-subtitle" id="receiptSubtitle"></p>
+            <div class="pdf-frame-wrap">
+                <iframe class="pdf-frame" id="receiptFrame" title="Vista previa del comprobante"></iframe>
+            </div>
+            <div class="receipt-actions">
+                <button class="receipt-action download" type="button" id="downloadReceipt">Descargar PDF</button>
+                <button class="receipt-action whatsapp" type="button" id="shareReceipt">Abrir WhatsApp Web</button>
+            </div>
+            <p class="receipt-note" id="receiptNote">Se abrira WhatsApp Web con el chat del cliente y el mensaje del comprobante. Descarga el PDF y adjuntalo desde el chat.</p>
+        </div>
+    </div>
+@endif
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" referrerpolicy="no-referrer"></script>
 <script>
     const naturalClients = @json($clientesNaturalesJson);
     const juridicoClients = @json($clientesJuridicosJson);
+    const receiptData = @json(session('receipt'));
 
     const searchInput = document.getElementById('searchProduct');
     const categoryFilter = document.getElementById('categoryFilter');
@@ -768,12 +941,240 @@
     const telefonoInput = document.getElementById('telefono');
     const razonInput = document.getElementById('razon_social');
     const contactoInput = document.getElementById('contacto');
+    const cashBox = document.getElementById('cashBox');
+    const cashReceivedInput = document.getElementById('cash_received');
+    const cashChange = document.getElementById('cashChange');
+    const receiptOverlay = document.getElementById('receiptOverlay');
+    const closeReceipt = document.getElementById('closeReceipt');
+    const receiptSubtitle = document.getElementById('receiptSubtitle');
+    const receiptFrame = document.getElementById('receiptFrame');
+    const downloadReceipt = document.getElementById('downloadReceipt');
+    const shareReceipt = document.getElementById('shareReceipt');
+    const receiptNote = document.getElementById('receiptNote');
 
     const checkoutState = new Map();
     let currentTotal = 0;
+    let receiptPdfBlob = null;
+    let receiptPdfUrl = null;
+    let receiptPdfFileName = '';
 
     function formatPrice(value) {
         return 'S/ ' + value.toFixed(2);
+    }
+
+    function formatMethod(method) {
+        const labels = {
+            efectivo: 'Efectivo',
+            tarjeta: 'Tarjeta',
+            'qr-yape': 'QR Yape',
+        };
+
+        return labels[method] || method || 'Efectivo';
+    }
+
+    function sanitizePhone(value) {
+        const digits = String(value || '').replace(/\D/g, '');
+
+        if (digits.length === 9) {
+            return `51${digits}`;
+        }
+
+        return digits;
+    }
+
+    function getReceiptClientName(receipt) {
+        if (!receipt?.cliente) {
+            return 'Cliente General';
+        }
+
+        return receipt.tipo_comprobante === 'factura'
+            ? receipt.cliente.razon_social
+            : receipt.cliente.nombre;
+    }
+
+    function getReceiptPhone(receipt) {
+        if (!receipt?.cliente) {
+            return '';
+        }
+
+        return sanitizePhone(receipt.cliente.telefono || receipt.cliente.contacto || '');
+    }
+
+    function buildReceiptPdf(receipt) {
+        const jsPDF = window.jspdf?.jsPDF;
+
+        if (!jsPDF) {
+            throw new Error('No se pudo cargar jsPDF.');
+        }
+
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const typeLabel = receipt.tipo_comprobante === 'factura'
+            ? 'FACTURA ELECTRONICA'
+            : 'BOLETA DE VENTA ELECTRONICA';
+        const fullNumber = `${receipt.serie}-${receipt.numero}`;
+        const items = Array.isArray(receipt.items) ? receipt.items : [];
+        const total = Number(receipt.total || 0);
+        const taxable = total / 1.18;
+        const tax = total - taxable;
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const frameX = 48;
+        const frameY = 58;
+        const frameW = pageWidth - 96;
+        const headerBoxW = 210;
+        const headerBoxH = 72;
+        const headerBoxX = frameX + frameW - headerBoxW - 42;
+        const headerBoxY = 78;
+        const headerCenterX = headerBoxX + (headerBoxW / 2);
+
+        doc.setDrawColor(40, 122, 122);
+        doc.setLineWidth(2);
+        doc.rect(frameX, frameY, frameW, 720);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(26);
+        doc.setTextColor(9, 25, 46);
+        doc.text('DEMAR', 78, 105);
+
+        doc.roundedRect(headerBoxX, headerBoxY, headerBoxW, headerBoxH, 8, 8);
+        doc.setFontSize(11);
+        doc.text(typeLabel, headerCenterX, 112, {
+            align: 'center',
+            maxWidth: headerBoxW - 28,
+        });
+        doc.setFontSize(12);
+        doc.setTextColor(40, 122, 122);
+        doc.text(fullNumber, headerCenterX, 139, { align: 'center' });
+
+        doc.setDrawColor(226, 218, 204);
+        doc.line(78, 196, 505, 196);
+
+        doc.setTextColor(68, 68, 68);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Cliente:', 78, 230);
+        doc.text('Fecha:', 338, 230);
+        doc.text('Metodo de pago:', 78, 255);
+        doc.setFont('helvetica', 'normal');
+        doc.text(getReceiptClientName(receipt) || 'Cliente General', 142, 230);
+        doc.text(String(receipt.fecha || ''), 390, 230);
+        doc.text(formatMethod(receipt.metodo_pago), 170, 255);
+
+        if (receipt.cliente) {
+            doc.setFont('helvetica', 'bold');
+            doc.text(receipt.tipo_comprobante === 'factura' ? 'RUC:' : 'DNI:', 78, 285);
+            doc.text(receipt.tipo_comprobante === 'factura' ? 'Contacto:' : 'Telefono:', 338, 285);
+            doc.setFont('helvetica', 'normal');
+            doc.text(String(receipt.cliente.documento || ''), 142, 285);
+            doc.text(String(receipt.cliente.contacto || receipt.cliente.telefono || ''), 410, 285);
+        }
+
+        const tableTop = receipt.cliente ? 330 : 300;
+        doc.setFillColor(242, 237, 230);
+        doc.rect(78, tableTop, 427, 30, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(9, 25, 46);
+        doc.text('Producto', 88, tableTop + 19);
+        doc.text('Cant.', 315, tableTop + 19);
+        doc.text('Precio', 365, tableTop + 19);
+        doc.text('Total', 455, tableTop + 19);
+
+        let y = tableTop + 52;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(68, 68, 68);
+        items.forEach((item) => {
+            const quantity = Number(item.cantidad || 0);
+            const price = Number(item.precio || 0);
+            const lineTotal = quantity * price;
+
+            doc.text(String(item.nombre || 'Producto'), 88, y, { maxWidth: 205 });
+            doc.text(String(quantity), 324, y);
+            doc.text(`S/ ${price.toFixed(2)}`, 365, y);
+            doc.text(`S/ ${lineTotal.toFixed(2)}`, 455, y);
+            y += 28;
+        });
+
+        y = Math.max(y + 16, 520);
+        doc.setDrawColor(9, 25, 46);
+        doc.line(315, y, 505, y);
+        y += 28;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Operaciones gravadas', 315, y);
+        doc.text(`S/ ${taxable.toFixed(2)}`, 455, y);
+        y += 24;
+        doc.text('IGV (18%)', 315, y);
+        doc.text(`S/ ${tax.toFixed(2)}`, 455, y);
+        y += 30;
+        doc.setFontSize(15);
+        doc.setTextColor(40, 122, 122);
+        doc.text('Total', 315, y);
+        doc.text(`S/ ${total.toFixed(2)}`, 455, y);
+
+        if (receipt.metodo_pago === 'efectivo') {
+            const paid = Number(receipt.monto_pagado || 0);
+            const change = Number(receipt.vuelto || 0);
+            y += 34;
+            doc.setFontSize(11);
+            doc.setTextColor(68, 68, 68);
+            doc.text('Pago recibido', 315, y);
+            doc.text(`S/ ${paid.toFixed(2)}`, 455, y);
+            y += 24;
+            doc.text('Vuelto', 315, y);
+            doc.text(`S/ ${change.toFixed(2)}`, 455, y);
+        }
+
+        doc.setFontSize(9);
+        doc.setTextColor(107, 122, 138);
+        doc.text('Gracias por tu compra.', 78, 735);
+
+        return doc;
+    }
+
+    function showReceipt(receipt) {
+        if (!receipt || !receiptOverlay) return;
+
+        try {
+            const pdf = buildReceiptPdf(receipt);
+            receiptPdfBlob = pdf.output('blob');
+
+            if (receiptPdfUrl) {
+                URL.revokeObjectURL(receiptPdfUrl);
+            }
+
+            receiptPdfUrl = URL.createObjectURL(receiptPdfBlob);
+            receiptPdfFileName = `${receipt.tipo_comprobante}-${receipt.serie}-${receipt.numero}.pdf`;
+            receiptFrame.src = receiptPdfUrl;
+            receiptSubtitle.textContent = `Tu pedido #${receipt.id} fue registrado correctamente. Este es tu archivo PDF de ${receipt.tipo_comprobante}.`;
+            downloadReceipt.textContent = `Descargar ${receipt.tipo_comprobante} PDF`;
+            receiptOverlay.classList.add('active');
+        } catch (error) {
+            receiptNote.textContent = 'La venta fue registrada, pero no se pudo generar la vista previa del PDF. Revisa tu conexion o la libreria jsPDF.';
+        }
+    }
+
+    function downloadCurrentReceipt() {
+        if (!receiptPdfBlob || !receiptPdfFileName) return;
+
+        const link = document.createElement('a');
+        link.href = receiptPdfUrl;
+        link.download = receiptPdfFileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    async function shareCurrentReceipt() {
+        if (!receiptData || !receiptPdfBlob) return;
+
+        const phone = getReceiptPhone(receiptData);
+        const message = `Hola, te compartimos tu ${receiptData.tipo_comprobante} DEMAR ${receiptData.serie}-${receiptData.numero} por S/ ${Number(receiptData.total || 0).toFixed(2)}.`;
+
+        const whatsappUrl = phone
+            ? `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`
+            : `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank', 'noopener');
+        receiptNote.textContent = 'Se abrio WhatsApp Web. Descarga el PDF y adjuntalo manualmente en el chat.';
     }
 
     function selectedDocumentType() {
@@ -882,7 +1283,23 @@
         checkoutTaxable.textContent = formatPrice(gravada);
         checkoutTax.textContent = formatPrice(tax);
         checkoutTotal.textContent = formatPrice(subtotal);
+        updateCashFlow();
         updateCustomerFlow();
+    }
+
+    function updateCashFlow() {
+        const isCash = paymentMethodInput.value === 'efectivo';
+        cashBox?.classList.toggle('active', isCash);
+        setRequired(cashReceivedInput, isCash);
+
+        if (!cashReceivedInput || !cashChange) {
+            return;
+        }
+
+        cashReceivedInput.min = currentTotal.toFixed(2);
+        const received = parseFloat(cashReceivedInput.value) || 0;
+        const change = Math.max(0, received - currentTotal);
+        cashChange.textContent = formatPrice(change);
     }
 
     function applyFilters() {
@@ -953,10 +1370,31 @@
         paymentMethods.querySelectorAll('.payment-pill').forEach(item => item.classList.remove('active'));
         pill.classList.add('active');
         paymentMethodInput.value = pill.dataset.method || 'efectivo';
+        updateCashFlow();
+    });
+
+    cashReceivedInput?.addEventListener('input', updateCashFlow);
+
+    closeReceipt?.addEventListener('click', () => {
+        receiptOverlay?.classList.remove('active');
+    });
+
+    receiptOverlay?.addEventListener('click', (event) => {
+        if (event.target === receiptOverlay) {
+            receiptOverlay.classList.remove('active');
+        }
+    });
+
+    downloadReceipt?.addEventListener('click', downloadCurrentReceipt);
+    shareReceipt?.addEventListener('click', () => {
+        shareCurrentReceipt().catch(() => {
+            receiptNote.textContent = 'No se pudo abrir WhatsApp desde este navegador.';
+        });
     });
 
     applyFilters();
     updateCheckout();
+    showReceipt(receiptData);
 </script>
 </body>
 </html>

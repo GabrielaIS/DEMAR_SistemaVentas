@@ -62,6 +62,7 @@ class CajaController extends Controller
         $request->validate([
             'products' => 'nullable|array',
             'payment_method' => 'nullable|string',
+            'cash_received' => 'nullable|numeric|min:0',
             'tipo_comprobante' => 'required|in:boleta,factura',
             'documento_cliente' => 'nullable|digits_between:8,11',
             'nombres_apellidos' => 'nullable|string|max:255',
@@ -99,6 +100,22 @@ class CajaController extends Controller
 
         if (empty($items)) {
             return back()->withErrors(['products' => 'Selecciona al menos un producto con cantidad.']);
+        }
+
+        $paymentMethod = $request->input('payment_method', 'efectivo');
+        $cashReceived = null;
+        $cashChange = null;
+
+        if ($paymentMethod === 'efectivo') {
+            $request->validate([
+                'cash_received' => 'required|numeric|min:'.$total,
+            ], [
+                'cash_received.required' => 'Ingresa con cuanto pago el cliente.',
+                'cash_received.min' => 'El monto recibido no puede ser menor al total.',
+            ]);
+
+            $cashReceived = (float) $request->input('cash_received');
+            $cashChange = round($cashReceived - $total, 2);
         }
 
         $clienteId = null;
@@ -160,13 +177,13 @@ class CajaController extends Controller
             }
         }
 
-        DB::transaction(function () use ($clienteId, $items, $total, $tipoComprobante, $request, $productsToUpdate) {
-            Venta::create([
+        $venta = DB::transaction(function () use ($clienteId, $items, $total, $tipoComprobante, $paymentMethod, $productsToUpdate) {
+            $venta = Venta::create([
                 'cliente_id' => $clienteId,
                 'usuario_id' => Auth::id(),
                 'items' => json_encode($items),
                 'total' => $total,
-                'metodo_pago' => $request->input('payment_method', 'efectivo'),
+                'metodo_pago' => $paymentMethod,
                 'tipo_comprobante' => $tipoComprobante,
                 'estado' => 'completada',
             ]);
@@ -175,8 +192,46 @@ class CajaController extends Controller
                 $prod->stock = max(0, $prod->stock - $qty);
                 $prod->save();
             }
+
+            return $venta;
         });
 
-        return redirect()->route('caja')->with('success', 'Venta registrada correctamente.');
+        $receiptClient = null;
+
+        if ($clienteId && isset($cliente)) {
+            if ($tipoComprobante === 'boleta') {
+                $receiptClient = [
+                    'tipo' => 'natural',
+                    'nombre' => $cliente->nombres_apellidos,
+                    'documento' => $cliente->documento,
+                    'telefono' => $cliente->telefono,
+                ];
+            }
+
+            if ($tipoComprobante === 'factura') {
+                $receiptClient = [
+                    'tipo' => 'juridico',
+                    'razon_social' => $cliente->razon_social,
+                    'documento' => $cliente->documento,
+                    'contacto' => $cliente->contacto,
+                ];
+            }
+        }
+
+        return redirect()->route('caja')
+            ->with('success', 'Venta registrada correctamente.')
+            ->with('receipt', [
+                'id' => $venta->id,
+                'serie' => $tipoComprobante === 'boleta' ? 'B001' : 'F001',
+                'numero' => str_pad((string) $venta->id, 6, '0', STR_PAD_LEFT),
+                'tipo_comprobante' => $tipoComprobante,
+                'cliente' => $receiptClient,
+                'items' => $items,
+                'total' => $total,
+                'metodo_pago' => $paymentMethod,
+                'monto_pagado' => $cashReceived,
+                'vuelto' => $cashChange,
+                'fecha' => now()->format('d/m/Y H:i:s'),
+            ]);
     }
 }
