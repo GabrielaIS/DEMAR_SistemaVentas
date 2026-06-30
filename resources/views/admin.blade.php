@@ -815,93 +815,83 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <img src="{{ asset('collares/collar1.png') }}" alt="Collar">
-                                            <strong>Collar Perla Marina</strong>
-                                        </div>
-                                    </td>
-                                    <td>Collar</td>
-                                    <td class="money">S/ 45.00</td>
-                                    <td><span class="status-ok">12</span></td>
-                                    <td>
-                                        <div class="actions">
-                                            <button class="icon-btn" type="button" title="Editar">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                    <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
-                                                </svg>
-                                            </button>
-                                            <button class="icon-btn" type="button" title="Eliminar">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                    <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="product-cell">
-                                            <img src="{{ asset('pulseras/pulsera1.jpeg') }}" alt="Pulsera">
-                                            <strong>Pulsera Perlas Naturales</strong>
-                                        </div>
-                                    </td>
-                                    <td>Pulsera</td>
-                                    <td class="money">S/ 29.90</td>
-                                    <td><span class="status-ok">15</span></td>
-                                    <td>
-                                        <div class="actions">
-                                            <button class="icon-btn" type="button" title="Editar">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                    <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
-                                                </svg>
-                                            </button>
-                                            <button class="icon-btn" type="button" title="Eliminar">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                    <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                @forelse($productos as $producto)
+                                    <tr>
+                                        <td>
+                                            <div class="product-cell">
+                                                <img src="{{ asset($producto->imagen ?? 'Logo.png') }}" alt="{{ $producto->nombre }}">
+                                                <strong>{{ $producto->nombre }}</strong>
+                                            </div>
+                                        </td>
+                                        <td>{{ ucfirst($producto->categoria) }}</td>
+                                        <td class="money">S/ {{ number_format($producto->precio, 2) }}</td>
+                                        <td><span class="status-ok">{{ $producto->stock }}</span></td>
+                                        <td>
+                                            <div class="actions">
+                                                <button class="icon-btn" type="button" title="Editar"
+                                                    onclick='cargarEdicionProducto(@json($producto))'>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                        <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
+                                                    </svg>
+                                                </button>
+                                                <form action="{{ route('productos.destroy', $producto) }}" method="POST" onsubmit="return confirm('¿Eliminar este producto?');" style="display:inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="icon-btn" type="submit" title="Eliminar">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                            <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5">Aún no hay productos registrados.</td></tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </article>
 
                 <aside class="form-panel">
-                    <h3>Agregar producto</h3>
-                    <div class="field">
-                        <label for="producto_nombre">Nombre</label>
-                        <input id="producto_nombre" type="text" placeholder="Nombre del producto">
-                    </div>
-                    <div class="field">
-                        <label for="producto_descripcion">Descripcion</label>
-                        <textarea id="producto_descripcion" placeholder="Descripcion del producto"></textarea>
-                    </div>
-                    <div class="field-grid">
+                    <h3 id="productoFormTitulo">Agregar producto</h3>
+                    <form id="formProducto" action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="_method" id="productoMethod" value="POST">
+
                         <div class="field">
-                            <label for="producto_precio">Precio</label>
-                            <input id="producto_precio" type="number" min="0" step="0.01" placeholder="0.00">
+                            <label for="producto_nombre">Nombre</label>
+                            <input id="producto_nombre" name="nombre" type="text" placeholder="Nombre del producto" required>
                         </div>
                         <div class="field">
-                            <label for="producto_stock">Stock</label>
-                            <input id="producto_stock" type="number" min="0" placeholder="0">
+                            <label for="producto_descripcion">Descripcion</label>
+                            <textarea id="producto_descripcion" name="descripcion" placeholder="Descripcion del producto"></textarea>
                         </div>
-                    </div>
-                    <div class="field">
-                        <label for="producto_categoria">Categoria</label>
-                        <select id="producto_categoria">
-                            <option>Collar</option>
-                            <option>Pulsera</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="producto_imagen">Imagen</label>
-                        <input id="producto_imagen" type="file" accept="image/*">
-                    </div>
-                    <button class="btn-primary" type="button">Guardar producto</button>
+                        <div class="field-grid">
+                            <div class="field">
+                                <label for="producto_precio">Precio</label>
+                                <input id="producto_precio" name="precio" type="number" min="0" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div class="field">
+                                <label for="producto_stock">Stock</label>
+                                <input id="producto_stock" name="stock" type="number" min="0" placeholder="0" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="producto_categoria">Categoria</label>
+                            <select id="producto_categoria" name="categoria">
+                                <option value="collar">Collar</option>
+                                <option value="pulsera">Pulsera</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="producto_imagen">Imagen</label>
+                            <input id="producto_imagen" name="imagen" type="file" accept="image/*">
+                        </div>
+                        <button class="btn-primary" type="submit">Guardar producto</button>
+                        <button class="btn-secondary" type="button" id="cancelarEdicionProducto" style="display:none;margin-top:8px;">Cancelar edición</button>
+                    </form>
                 </aside>
             </div>
         </section>
@@ -928,47 +918,61 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>Cajero</td>
-                                    <td>cajero@demar.com</td>
-                                    <td>Cajero</td>
-                                    <td><span class="pill">Activo</span></td>
-                                    <td>
-                                        <div class="actions">
-                                            <button class="icon-btn" type="button" title="Editar">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                    <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                @forelse($cajeros as $cajero)
+                                    <tr>
+                                        <td>{{ $cajero->nombre }}</td>
+                                        <td>{{ $cajero->email }}</td>
+                                        <td>Cajero</td>
+                                        <td><span class="pill">Activo</span></td>
+                                        <td>
+                                            <div class="actions">
+                                                <button class="icon-btn" type="button" title="Editar"
+                                                    onclick="cargarEdicionCajero({{ $cajero->id }}, '{{ addslashes($cajero->nombre) }}', '{{ addslashes($cajero->email) }}')">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                        <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
+                                                    </svg>
+                                                </button>
+                                                <form action="{{ route('cajeros.destroy', $cajero) }}" method="POST" onsubmit="return confirm('¿Eliminar este cajero?');" style="display:inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="icon-btn" type="submit" title="Eliminar">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                            <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="5">Aún no hay cajeros registrados.</td></tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
                 </article>
 
                 <aside class="form-panel">
-                    <h3>Nuevo cajero</h3>
-                    <div class="field">
-                        <label for="cajero_nombre">Nombre</label>
-                        <input id="cajero_nombre" type="text" placeholder="Nombre del cajero">
-                    </div>
-                    <div class="field">
-                        <label for="cajero_email">Correo</label>
-                        <input id="cajero_email" type="email" placeholder="cajero@demar.com">
-                    </div>
-                    <div class="field">
-                        <label for="cajero_password">Contrasena</label>
-                        <input id="cajero_password" type="password" placeholder="Contrasena temporal">
-                    </div>
-                    <div class="field">
-                        <label for="cajero_rol">Rol</label>
-                        <select id="cajero_rol">
-                            <option>Cajero</option>
-                        </select>
-                    </div>
-                    <button class="btn-primary" type="button">Crear cajero</button>
+                    <h3 id="cajeroFormTitulo">Nuevo cajero</h3>
+                    <form id="formCajero" action="{{ route('cajeros.store') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="_method" id="cajeroMethod" value="POST">
+
+                        <div class="field">
+                            <label for="cajero_nombre">Nombre</label>
+                            <input id="cajero_nombre" name="nombre" type="text" placeholder="Nombre del cajero" required>
+                        </div>
+                        <div class="field">
+                            <label for="cajero_email">Correo</label>
+                            <input id="cajero_email" name="email" type="email" placeholder="cajero@demar.com" required>
+                        </div>
+                        <div class="field">
+                            <label for="cajero_password">Contrasena</label>
+                            <input id="cajero_password" name="password" type="password" placeholder="Contrasena temporal">
+                        </div>
+                        <button class="btn-primary" type="submit">Crear cajero</button>
+                        <button class="btn-secondary" type="button" id="cancelarEdicionCajero" style="display:none;margin-top:8px;">Cancelar edición</button>
+                    </form>
                 </aside>
             </div>
         </section>
@@ -989,6 +993,48 @@
             button.classList.add('active');
             document.getElementById(target)?.classList.add('active');
         });
+    });
+
+    function cargarEdicionProducto(producto) {
+        const form = document.getElementById('formProducto');
+        form.action = `/admin/productos/${producto.id}`;
+        document.getElementById('productoMethod').value = 'PUT';
+        document.getElementById('productoFormTitulo').textContent = 'Editar producto';
+        document.getElementById('producto_nombre').value = producto.nombre;
+        document.getElementById('producto_descripcion').value = producto.descripcion ?? '';
+        document.getElementById('producto_precio').value = producto.precio;
+        document.getElementById('producto_stock').value = producto.stock;
+        document.getElementById('producto_categoria').value = producto.categoria;
+        document.getElementById('cancelarEdicionProducto').style.display = 'inline-block';
+    }
+
+    document.getElementById('cancelarEdicionProducto')?.addEventListener('click', () => {
+        const form = document.getElementById('formProducto');
+        form.action = "{{ route('productos.store') }}";
+        document.getElementById('productoMethod').value = 'POST';
+        document.getElementById('productoFormTitulo').textContent = 'Agregar producto';
+        form.reset();
+        document.getElementById('cancelarEdicionProducto').style.display = 'none';
+    });
+
+    function cargarEdicionCajero(id, nombre, email) {
+        const form = document.getElementById('formCajero');
+        form.action = `/admin/cajeros/${id}`;
+        document.getElementById('cajeroMethod').value = 'PUT';
+        document.getElementById('cajeroFormTitulo').textContent = 'Editar cajero';
+        document.getElementById('cajero_nombre').value = nombre;
+        document.getElementById('cajero_email').value = email;
+        document.getElementById('cajero_password').placeholder = 'Dejar en blanco para no cambiarla';
+        document.getElementById('cancelarEdicionCajero').style.display = 'inline-block';
+    }
+
+    document.getElementById('cancelarEdicionCajero')?.addEventListener('click', () => {
+        const form = document.getElementById('formCajero');
+        form.action = "{{ route('cajeros.store') }}";
+        document.getElementById('cajeroMethod').value = 'POST';
+        document.getElementById('cajeroFormTitulo').textContent = 'Nuevo cajero';
+        form.reset();
+        document.getElementById('cancelarEdicionCajero').style.display = 'none';
     });
 </script>
 </body>

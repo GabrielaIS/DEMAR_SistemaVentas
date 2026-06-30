@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Producto;
+use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -104,13 +106,20 @@ class AuthController extends Controller
 
         $productosReporte = collect($productosReporte)->values()->sortByDesc('total')->values();
 
+
+        $productos = Producto::latest()->get();
+        $cajeros   = User::where('rol', 'cajero')->latest()->get();
+
         return view('admin', compact(
             'ventas',
             'ventasHoyTotal',
             'ventasMesTotal',
             'ticketPromedio',
             'unidadesVendidas',
-            'productosReporte'
+            'productosReporte',
+            'productos',
+            'cajeros'
         ));
+
     }
 }
