@@ -602,6 +602,111 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .form-panel form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 10px 0;
+        }
+        .form-panel .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-panel .field label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #4a5568;
+        }
+        .form-panel .btn-crear-cajero {
+            margin-top: 12px;
+            align-self: center;
+            padding: 10px 30px;
+            cursor: pointer;
+            width: auto;
+            min-width: 160px;
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-container input {
+            width: 100%;
+            padding-right: 40px; 
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            transition: color 0.2s;
+        }
+        .toggle-password:hover {
+            color: #4a5568;
+        }
+
+        
+        .btn-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-edit { color: #1F556c; }
+        .btn-edit:hover { background-color: #e2f1f5; color: #17a2b8; }
+        .btn-delete { color: #e57373; }
+        .btn-delete:hover { background-color: #fff5f5; color: #c53030; }
+        .btn-action svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* Estilos del modal emergente */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;
+        }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #a0aec0; line-height: 1; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        /* Oculta por completo el ojo nativo que los navegadores meten a la fuerza */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none !important;
+        }
+        input::-webkit-credentials-reveal {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -896,87 +1001,157 @@
             </div>
         </section>
 
-        <section class="section" id="cajeros" aria-label="Crear cajeros">
             <div class="content-grid">
-                <article class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <h3>Cajeros</h3>
-                            <span>Agregar o crear nuevos usuarios cajeros</span>
+                        
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Cajeros</h3>
+                                <span>Agregar o crear nuevos usuarios cajeros</span>
+                            </div>
+                            <span class="pill">Usuarios</span>
                         </div>
-                        <span class="pill">Usuarios</span>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Correo</th>
-                                    <th>Rol</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($cajeros as $cajero)
+                        <div class="table-wrap">
+                            <table id="tabla-cajeros">
+                                <thead>
                                     <tr>
-                                        <td>{{ $cajero->nombre }}</td>
-                                        <td>{{ $cajero->email }}</td>
-                                        <td>Cajero</td>
-                                        <td><span class="pill">Activo</span></td>
-                                        <td>
-                                            <div class="actions">
-                                                <button class="icon-btn" type="button" title="Editar"
-                                                    onclick="cargarEdicionCajero({{ $cajero->id }}, '{{ addslashes($cajero->nombre) }}', '{{ addslashes($cajero->email) }}')">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                        <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                        <th>Rol</th>
+                                        <th style="text-align: center; width: 100px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($usuarios ?? [] as $usuario)
+                                        <tr>
+                                            <td>{{ $usuario->nombre ?? $usuario->name }}</td>
+                                            <td>{{ $usuario->email }}</td>
+                                            <td>{{ ucfirst($usuario->rol) }}</td>
+                                            <td style="text-align: center; display: flex; justify-content: center; gap: 6px;">
+                                                
+                                                <button class="btn-action btn-edit" title="Editar"
+                                                        data-id="{{ $usuario->id }}"
+                                                        data-nombre="{{ $usuario->nombre ?? $usuario->name }}"
+                                                        data-email="{{ $usuario->email }}">
+                                                    <svg viewBox="0 0 24 24">
+                                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                                     </svg>
                                                 </button>
-                                                <form action="{{ route('cajeros.destroy', $cajero) }}" method="POST" onsubmit="return confirm('¿Eliminar este cajero?');" style="display:inline">
+                                                
+                                                <form action="{{ route('cajeros.destroy', $usuario->id ?? $usuario->name) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de eliminar a este cajero?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button class="icon-btn" type="submit" title="Eliminar">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                                            <path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>
+                                                    <button type="submit" class="btn-action btn-delete" title="Eliminar">
+                                                        <svg viewBox="0 0 24 24">
+                                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                                         </svg>
                                                     </button>
                                                 </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="5">Aún no hay cajeros registrados.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    
+                                    @if(empty($usuarios) || count($usuarios) == 0)
+                                        <tr class="row-vacia">
+                                            <td colspan="4" style="text-align: center; color: #a0aec0; padding: 20px;">
+                                                No hay cajeros registrados todavía.
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <aside class="form-panel">
+                        <h3>Nuevo cajero</h3>
+                        
+                        @if(session('success'))
+                            <div style="color: #2f855a; background-color: #f0fff4; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
+                        @if($errors->any())
+                            <div style="color: #c53030; background-color: #fff5f5; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                        
+                        <form id="form-crear-cajero" method="POST" action="{{ route('cajeros.store') }}">
+                            @csrf
+                            <div class="field">
+                                <label for="cajero_nombre">Nombre</label>
+                                <input id="cajero_nombre" name="nombre" type="text" placeholder="Nombre del cajero" value="{{ old('nombre') }}" required>
+                            </div>
+                            <div class="field">
+                                <label for="cajero_email">Correo</label>
+                                <input id="cajero_email" name="email" type="email" placeholder="cajero@demar.com" value="{{ old('email') }}" required>
+                            </div>
+                            <div class="field">
+                                <label for="cajero_password">Contraseña</label>
+                                <div class="password-container">
+                                    <input id="cajero_password" name="password" type="password" placeholder="Mínimo 6 caracteres" required>
+                                    <button type="button" class="toggle-password" data-target="cajero_password">
+                                        <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-primary btn-crear-cajero" type="submit">Crear cajero</button>
+                        </form>
+                    </aside>
+
+                </div>
+
+                <div class="modal-overlay" id="modal-editar-cajero">
+                    <div class="modal-content form-panel">
+                        <div class="modal-header">
+                            <h3>Editar Cajero</h3>
+                            <button class="modal-close" id="btn-close-modal">&times;</button>
+                        </div>
+                        <form id="form-editar-cajero" method="POST" action="">
+                            @csrf
+                            @method('PUT')
+                            
+                            <div class="field">
+                                <label for="edit_nombre">Nombre</label>
+                                <input id="edit_nombre" name="nombre" type="text" required>
+                            </div>
+                            
+                            <div class="field">
+                                <label for="edit_email">Correo</label>
+                                <input id="edit_email" name="email" type="email" required>
+                            </div>
+                            
+                            <div class="field">
+                                <label for="edit_password">Contraseña (Dejar en blanco para no cambiar)</label>
+                                <div class="password-container">
+                                    <input id="edit_password" name="password" type="password" placeholder="Mínimo 6 caracteres">
+                                    <button type="button" class="toggle-password" data-target="edit_password">
+                                        <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn-secondary" id="btn-cancel-modal" style="padding: 10px 20px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                                <button type="submit" class="btn-primary" style="padding: 10px 20px; cursor: pointer;">Guardar cambios</button>
+                            </div>
+                        </form>
                     </div>
-                </article>
+                </div>
 
-                <aside class="form-panel">
-                    <h3 id="cajeroFormTitulo">Nuevo cajero</h3>
-                    <form id="formCajero" action="{{ route('cajeros.store') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="_method" id="cajeroMethod" value="POST">
-
-                        <div class="field">
-                            <label for="cajero_nombre">Nombre</label>
-                            <input id="cajero_nombre" name="nombre" type="text" placeholder="Nombre del cajero" required>
-                        </div>
-                        <div class="field">
-                            <label for="cajero_email">Correo</label>
-                            <input id="cajero_email" name="email" type="email" placeholder="cajero@demar.com" required>
-                        </div>
-                        <div class="field">
-                            <label for="cajero_password">Contrasena</label>
-                            <input id="cajero_password" name="password" type="password" placeholder="Contrasena temporal">
-                        </div>
-                        <button class="btn-primary" type="submit">Crear cajero</button>
-                        <button class="btn-secondary" type="button" id="cancelarEdicionCajero" style="display:none;margin-top:8px;">Cancelar edición</button>
-                    </form>
-                </aside>
             </div>
-        </section>
-    </main>
+   </main>
 </div>
 
 <script>
@@ -1036,6 +1211,67 @@
         form.reset();
         document.getElementById('cancelarEdicionCajero').style.display = 'none';
     });
+   document.addEventListener('DOMContentLoaded', function() {
+    const iconoOjoAbierto = `<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+    const iconoOjoCerrado = `<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.43-1.47.68-2.33.68-2.76 0-5-2.24-5-5 0-.86.25-1.66.68-2.33zM11.84 8.5l2.6 2.6c-.05-.2-.14-.39-.28-.53-.14-.14-.33-.23-.53-.28L11.84 8.5z"/></svg>`;
+
+    
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.innerHTML = iconoOjoCerrado;
+        
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const input = document.getElementById(targetId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.innerHTML = iconoOjoAbierto; 
+                this.style.color = '#17a2b8';     
+            } else {
+                input.type = 'password';
+                this.innerHTML = iconoOjoCerrado; 
+                this.style.color = '#718096';      
+            }
+        });
+    });
+
+    // 2. LÓGICA DE CONTROL DEL MODAL (EDITAR)
+    const modal = document.getElementById('modal-editar-cajero');
+    const formEditar = document.getElementById('form-editar-cajero');
+    const btnClose = document.getElementById('btn-close-modal');
+    const btnCancel = document.getElementById('btn-cancel-modal');
+    
+    document.querySelectorAll('.btn-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nombre = this.dataset.nombre;
+            const email = this.dataset.email;
+            
+            formEditar.setAttribute('action', `/admin/cajeros/${id}`);
+            
+            document.getElementById('edit_nombre').value = nombre;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_password').value = ''; 
+            
+            // Forzar a que empiece en tipo password y con el icono tachado al abrir
+            const editPassInput = document.getElementById('edit_password');
+            editPassInput.type = 'password';
+            
+            const editBtn = document.querySelector('[data-target="edit_password"]');
+            editBtn.innerHTML = iconoOjoCerrado;
+            editBtn.style.color = '#718096';
+            
+            modal.classList.add('active');
+        });
+    });
+    
+    const cerrarModal = () => modal.classList.remove('active');
+    btnClose.addEventListener('click', cerrarModal);
+    btnCancel.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) cerrarModal(); });
+});
 </script>
 </body>
 </html>
+
+

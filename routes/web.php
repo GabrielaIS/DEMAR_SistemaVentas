@@ -23,3 +23,4 @@ Route::delete('/admin/productos/{producto}', [ProductoController::class, 'destro
 Route::post('/admin/cajeros', [CajeroController::class, 'store'])->name('cajeros.store');
 Route::put('/admin/cajeros/{cajero}', [CajeroController::class, 'update'])->name('cajeros.update');
 Route::delete('/admin/cajeros/{cajero}', [CajeroController::class, 'destroy'])->name('cajeros.destroy');
+Route::post('/admin/crear-cajero', [AuthController::class, 'storeCajero'])->name('admin.crearCajero');
