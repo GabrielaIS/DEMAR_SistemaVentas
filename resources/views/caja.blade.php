@@ -451,6 +451,36 @@
             color: var(--teal);
         }
 
+        .yape-qr-box {
+            display: none;
+            gap: 10px;
+            justify-items: center;
+            padding: 12px;
+            border: 1px solid rgba(40, 122, 122, 0.22);
+            border-radius: 8px;
+            background: #f4fbf9;
+            text-align: center;
+        }
+
+        .yape-qr-box.active {
+            display: grid;
+        }
+
+        .yape-qr-box img {
+            width: min(100%, 210px);
+            aspect-ratio: 1;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid rgba(9, 25, 46, 0.1);
+            background: #fff;
+        }
+
+        .yape-qr-box span {
+            color: var(--mid);
+            font-size: 0.84rem;
+            font-weight: 900;
+        }
+
         .segmented {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -905,6 +935,11 @@
                         </div>
                     </div>
 
+                    <div class="yape-qr-box" id="yapeQrBox">
+                        <img src="{{ asset('qr_yape.jpeg') }}" alt="QR Yape DEMAR">
+                        <span>Escanea el QR para pagar con Yape</span>
+                    </div>
+
                     <button class="btn-pay" type="submit">Pagar</button>
                 </aside>
             </div>
@@ -961,6 +996,7 @@
     const telefonoJuridicoInput = document.getElementById('telefono_juridico');
     const razonInput = document.getElementById('razon_social');
     const cashBox = document.getElementById('cashBox');
+    const yapeQrBox = document.getElementById('yapeQrBox');
     const cashReceivedInput = document.getElementById('cash_received');
     const cashChange = document.getElementById('cashChange');
     const receiptOverlay = document.getElementById('receiptOverlay');
@@ -1306,7 +1342,9 @@
 
     function updateCashFlow() {
         const isCash = paymentMethodInput.value === 'efectivo';
+        const isYapeQr = paymentMethodInput.value === 'qr-yape';
         cashBox?.classList.toggle('active', isCash);
+        yapeQrBox?.classList.toggle('active', isYapeQr);
         setRequired(cashReceivedInput, isCash);
 
         if (!cashReceivedInput || !cashChange) {
