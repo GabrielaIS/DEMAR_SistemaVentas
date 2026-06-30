@@ -1001,6 +1001,7 @@
             </div>
         </section>
 
+       <section class="section" id="cajeros" aria-label="Gestión de cajeros">
             <div class="content-grid">
                         
                     <article class="panel">
@@ -1149,8 +1150,7 @@
                         </form>
                     </div>
                 </div>
-
-            </div>
+        </section> 
    </main>
 </div>
 
