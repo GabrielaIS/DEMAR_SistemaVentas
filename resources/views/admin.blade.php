@@ -483,6 +483,78 @@
             color: var(--deep);
         }
 
+        .report-card {
+            display: grid;
+            gap: 18px;
+        }
+
+        .chart-shell {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.09), rgba(255, 255, 255, 0.95));
+            border: 1px solid rgba(40, 122, 122, 0.16);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .chart-shell svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .chart-caption {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .report-table {
+            margin-top: 16px;
+        }
+
+        .empty-state {
+            padding: 24px;
+            border: 1px dashed rgba(9, 25, 46, 0.16);
+            border-radius: 14px;
+            text-align: center;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        @media print {
+            body {
+                background: #fff;
+            }
+
+            .sidebar,
+            .menu-button,
+            .btn-primary,
+            .filters,
+            .topbar,
+            .admin-badge {
+                display: none !important;
+            }
+
+            .admin-shell {
+                display: block;
+            }
+
+            .main {
+                padding: 0;
+            }
+
+            .panel,
+            .form-panel,
+            .stat-card,
+            .chart-shell {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .section {
+                display: block !important;
+            }
+        }
+
         @media (max-width: 1120px) {
             .admin-shell {
                 grid-template-columns: 1fr;
@@ -587,87 +659,126 @@
 
         <section class="section active" id="reportes" aria-label="Reportes de ventas">
             <div class="stats-grid">
+                @php
+                    $ventasHoyTotal = $ventasHoyTotal ?? 0;
+                    $ventasMesTotal = $ventasMesTotal ?? 0;
+                    $ticketPromedio = $ticketPromedio ?? 0;
+                    $unidadesVendidas = $unidadesVendidas ?? 0;
+                    $ventas = $ventas ?? collect();
+                @endphp
                 <article class="stat-card">
                     <span>Ventas de hoy</span>
-                    <strong>S/ 0.00</strong>
-                    <small>0 operaciones</small>
+                    <strong>S/ {{ number_format((float) $ventasHoyTotal, 2, ',', '.') }}</strong>
+                    <small>{{ $ventas->filter(function ($venta) { return $venta->created_at && $venta->created_at->between(today()->startOfDay(), today()->endOfDay()); })->count() }} operaciones</small>
                 </article>
                 <article class="stat-card">
                     <span>Ventas del mes</span>
-                    <strong>S/ 0.00</strong>
-                    <small>0 comprobantes</small>
+                    <strong>S/ {{ number_format((float) $ventasMesTotal, 2, ',', '.') }}</strong>
+                    <small>{{ $ventas->filter(function ($venta) { return $venta->created_at && $venta->created_at->month === now()->month && $venta->created_at->year === now()->year; })->count() }} comprobantes</small>
                 </article>
                 <article class="stat-card">
                     <span>Ticket promedio</span>
-                    <strong>S/ 0.00</strong>
-                    <small>Segun historial</small>
+                    <strong>S/ {{ number_format((float) $ticketPromedio, 2, ',', '.') }}</strong>
+                    <small>Según historial</small>
                 </article>
                 <article class="stat-card">
                     <span>Productos vendidos</span>
-                    <strong>0</strong>
+                    <strong>{{ (int) $unidadesVendidas }}</strong>
                     <small>Unidades</small>
                 </article>
             </div>
 
             <div class="content-grid">
-                <article class="panel">
+                <article class="panel report-card">
                     <div class="panel-header">
                         <div>
-                            <h3>Historial de ventas</h3>
-                            <span>Reportes de las ventas registradas</span>
+                            <h3>Ventas por producto</h3>
+                            <span>Gráfico de barras con cantidad vendida y precio</span>
                         </div>
-                        <button class="btn-primary" type="button">Exportar</button>
+                        <button class="btn-primary" type="button" onclick="window.print()">Exportar PDF</button>
                     </div>
-                    <div class="filters">
-                        <input type="search" placeholder="Buscar venta">
-                        <select>
-                            <option>Todos los metodos</option>
-                            <option>Efectivo</option>
-                            <option>Tarjeta</option>
-                            <option>QR Yape</option>
-                        </select>
-                        <input type="date">
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Venta</th>
-                                    <th>Cliente</th>
-                                    <th>Cajero</th>
-                                    <th>Metodo</th>
-                                    <th>Total</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>#0001</td>
-                                    <td>Cliente general</td>
-                                    <td>Cajero</td>
-                                    <td>Efectivo</td>
-                                    <td class="money">S/ 0.00</td>
-                                    <td><span class="pill">Completada</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                    @php $productosReporte = $productosReporte ?? collect(); @endphp
+                    @if($productosReporte->isEmpty())
+                        <div class="empty-state">Aún no hay ventas registradas para mostrar un gráfico.</div>
+                    @else
+                        @php
+                            $maxCantidad = max($productosReporte->pluck('cantidad')->toArray());
+                            $maxPrecio = max($productosReporte->pluck('precio')->toArray());
+                            $maxPrecio = $maxPrecio > 0 ? $maxPrecio : 1;
+                            $maxCantidad = $maxCantidad > 0 ? $maxCantidad : 1;
+                        @endphp
+                        <div class="chart-shell">
+                            <svg viewBox="0 0 760 340" role="img" aria-label="Gráfico de barras por producto">
+                                <line x1="70" y1="285" x2="690" y2="285" stroke="#163352" stroke-width="2"></line>
+                                <line x1="70" y1="40" x2="70" y2="285" stroke="#163352" stroke-width="2"></line>
+
+                                @for ($tick = 0; $tick <= 4; $tick++)
+                                    @php $priceValue = round(($maxPrecio / 4) * $tick, 2); @endphp
+                                    <line x1="70" y1="{{ 285 - ($tick * 55) }}" x2="690" y2="{{ 285 - ($tick * 55) }}" stroke="#dfe7e7" stroke-dasharray="4 4"></line>
+                                    <text x="40" y="{{ 289 - ($tick * 55) }}" font-size="11" fill="#6b7a8a" text-anchor="end">S/ {{ number_format($priceValue, 2, ',', '.') }}</text>
+                                @endfor
+
+                                @for ($tick = 0; $tick <= 4; $tick++)
+                                    @php $qtyValue = round(($maxCantidad / 4) * $tick, 0); @endphp
+                                    <text x="{{ 70 + ($tick * 155) }}" y="305" font-size="11" fill="#6b7a8a" text-anchor="middle">{{ $qtyValue }}</text>
+                                @endfor
+
+                                @foreach($productosReporte as $index => $producto)
+                                    @php
+                                        $barWidth = 24 + (($producto['cantidad'] / $maxCantidad) * 90);
+                                        $barHeight = 25 + (($producto['precio'] / $maxPrecio) * 180);
+                                        $x = 95 + ($index * 110);
+                                        $y = 285 - $barHeight;
+                                    @endphp
+                                    <rect x="{{ $x }}" y="{{ $y }}" width="70" height="{{ $barHeight }}" rx="10" fill="#4ecdc4"></rect>
+                                    <text x="{{ $x + 35 }}" y="{{ $y - 8 }}" font-size="12" fill="#163352" text-anchor="middle">{{ 
+                                        Illuminate\Support\Str::limit($producto['nombre'], 12) }}</text>
+                                    <text x="{{ $x + 35 }}" y="{{ 300 }}" font-size="11" fill="#6b7a8a" text-anchor="middle">Cant. {{ $producto['cantidad'] }}</text>
+                                @endforeach
+                            </svg>
+                            <div class="chart-caption">Eje X: cantidad vendida • Eje Y: precio unitario de venta.</div>
+                        </div>
+
+                        <div class="table-wrap report-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($productosReporte as $producto)
+                                        <tr>
+                                            <td><strong>{{ $producto['nombre'] }}</strong></td>
+                                            <td>{{ $producto['cantidad'] }}</td>
+                                            <td class="money">S/ {{ number_format($producto['precio'], 2, ',', '.') }}</td>
+                                            <td class="money">S/ {{ number_format($producto['total'], 2, ',', '.') }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </article>
 
                 <aside class="form-panel">
-                    <h3>Resumen</h3>
+                    <h3>Resumen de reportes</h3>
                     <div class="summary-list">
                         <div class="summary-item">
-                            <span>Operaciones Gravadas</span>
-                            <strong>S/ 0.00</strong>
+                            <span>Ventas totales</span>
+                            <strong>S/ {{ number_format((float) ($ventasMesTotal ?? 0), 2, ',', '.') }}</strong>
                         </div>
                         <div class="summary-item">
-                            <span>IGV (18%)</span>
-                            <strong>S/ 0.00</strong>
+                            <span>Ticket promedio</span>
+                            <strong>S/ {{ number_format((float) ($ticketPromedio ?? 0), 2, ',', '.') }}</strong>
                         </div>
                         <div class="summary-item">
-                            <span>Total</span>
-                            <strong>S/ 0.00</strong>
+                            <span>Productos vendidos</span>
+                            <strong>{{ (int) ($unidadesVendidas ?? 0) }}</strong>
                         </div>
                     </div>
                 </aside>

@@ -15,18 +15,24 @@ class ClienteJuridicoSeeder extends Seeder
         $clientes = [
             [
                 'documento' => '20605487912',
+                'nombre' => 'Boutique Arena SAC',
                 'razon_social' => 'Boutique Arena SAC',
-                'telefono' => '987654321',
+                'contacto' => 'compras@boutiquearena.pe',
+                'tipo' => 'juridico',
             ],
             [
                 'documento' => '20478963215',
+                'nombre' => 'Regalos Lima Norte EIRL',
                 'razon_social' => 'Regalos Lima Norte EIRL',
-                'telefono' => '945612378',
+                'contacto' => '945612378',
+                'tipo' => 'juridico',
             ],
             [
                 'documento' => '20145896327',
+                'nombre' => 'Distribuidora Azul Marino SAC',
                 'razon_social' => 'Distribuidora Azul Marino SAC',
-                'telefono' => '956123789',
+                'contacto' => 'ventas@azulmarino.pe',
+                'tipo' => 'juridico',
             ],
         ];
 
