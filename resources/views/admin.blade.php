@@ -493,12 +493,21 @@
             border: 1px solid rgba(40, 122, 122, 0.16);
             border-radius: 16px;
             padding: 18px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .chart-shell-inner {
+            min-width: min-content;
+            display: flex;
+            align-items: center;
         }
 
         .chart-shell svg {
             width: 100%;
             height: auto;
             display: block;
+            min-width: 760px;
         }
 
         .chart-caption {
@@ -814,35 +823,37 @@
                             $maxCantidad = $maxCantidad > 0 ? $maxCantidad : 1;
                         @endphp
                         <div class="chart-shell">
-                            <svg viewBox="0 0 760 340" role="img" aria-label="Gráfico de barras por producto">
-                                <line x1="70" y1="285" x2="690" y2="285" stroke="#163352" stroke-width="2"></line>
-                                <line x1="70" y1="40" x2="70" y2="285" stroke="#163352" stroke-width="2"></line>
+                            <div class="chart-shell-inner">
+                                <svg viewBox="0 0 760 340" role="img" aria-label="Gráfico de barras por producto">
+                                    <line x1="70" y1="285" x2="690" y2="285" stroke="#163352" stroke-width="2"></line>
+                                    <line x1="70" y1="40" x2="70" y2="285" stroke="#163352" stroke-width="2"></line>
 
-                                @for ($tick = 0; $tick <= 4; $tick++)
-                                    @php $priceValue = round(($maxPrecio / 4) * $tick, 2); @endphp
-                                    <line x1="70" y1="{{ 285 - ($tick * 55) }}" x2="690" y2="{{ 285 - ($tick * 55) }}" stroke="#dfe7e7" stroke-dasharray="4 4"></line>
-                                    <text x="40" y="{{ 289 - ($tick * 55) }}" font-size="11" fill="#6b7a8a" text-anchor="end">S/ {{ number_format($priceValue, 2, ',', '.') }}</text>
-                                @endfor
+                                    @for ($tick = 0; $tick <= 4; $tick++)
+                                        @php $priceValue = round(($maxPrecio / 4) * $tick, 2); @endphp
+                                        <line x1="70" y1="{{ 285 - ($tick * 55) }}" x2="690" y2="{{ 285 - ($tick * 55) }}" stroke="#dfe7e7" stroke-dasharray="4 4"></line>
+                                        <text x="40" y="{{ 289 - ($tick * 55) }}" font-size="11" fill="#6b7a8a" text-anchor="end">S/ {{ number_format($priceValue, 2, ',', '.') }}</text>
+                                    @endfor
 
-                                @for ($tick = 0; $tick <= 4; $tick++)
-                                    @php $qtyValue = round(($maxCantidad / 4) * $tick, 0); @endphp
-                                    <text x="{{ 70 + ($tick * 155) }}" y="305" font-size="11" fill="#6b7a8a" text-anchor="middle">{{ $qtyValue }}</text>
-                                @endfor
+                                    @for ($tick = 0; $tick <= 4; $tick++)
+                                        @php $qtyValue = round(($maxCantidad / 4) * $tick, 0); @endphp
+                                        <text x="{{ 70 + ($tick * 155) }}" y="305" font-size="11" fill="#6b7a8a" text-anchor="middle">{{ $qtyValue }}</text>
+                                    @endfor
 
-                                @foreach($productosReporte as $index => $producto)
-                                    @php
-                                        $barWidth = 24 + (($producto['cantidad'] / $maxCantidad) * 90);
-                                        $barHeight = 25 + (($producto['precio'] / $maxPrecio) * 180);
-                                        $x = 95 + ($index * 110);
-                                        $y = 285 - $barHeight;
-                                    @endphp
-                                    <rect x="{{ $x }}" y="{{ $y }}" width="70" height="{{ $barHeight }}" rx="10" fill="#4ecdc4"></rect>
-                                    <text x="{{ $x + 35 }}" y="{{ $y - 8 }}" font-size="12" fill="#163352" text-anchor="middle">{{ 
-                                        Illuminate\Support\Str::limit($producto['nombre'], 12) }}</text>
-                                    <text x="{{ $x + 35 }}" y="{{ 300 }}" font-size="11" fill="#6b7a8a" text-anchor="middle">Cant. {{ $producto['cantidad'] }}</text>
-                                @endforeach
-                            </svg>
-                            <div class="chart-caption">Eje X: cantidad vendida • Eje Y: precio unitario de venta.</div>
+                                    @foreach($productosReporte as $index => $producto)
+                                        @php
+                                            $barWidth = 24 + (($producto['cantidad'] / $maxCantidad) * 90);
+                                            $barHeight = 25 + (($producto['precio'] / $maxPrecio) * 180);
+                                            $x = 95 + ($index * 110);
+                                            $y = 285 - $barHeight;
+                                        @endphp
+                                        <rect x="{{ $x }}" y="{{ $y }}" width="70" height="{{ $barHeight }}" rx="10" fill="#4ecdc4"></rect>
+                                        <text x="{{ $x + 35 }}" y="{{ $y - 8 }}" font-size="12" fill="#163352" text-anchor="middle">{{ 
+                                            Illuminate\Support\Str::limit($producto['nombre'], 12) }}</text>
+                                        <text x="{{ $x + 35 }}" y="{{ 300 }}" font-size="11" fill="#6b7a8a" text-anchor="middle">Cant. {{ $producto['cantidad'] }}</text>
+                                    @endforeach
+                                </svg>
+                            </div>
+                            <div class="chart-caption">Eje X: cantidad vendida • Eje Y: precio unitario de venta. Desplaza horizontalmente para ver todos los productos.</div>
                         </div>
 
                         <div class="table-wrap report-table">
@@ -1073,7 +1084,7 @@
                             </div>
                         @endif
 
-                        @if($errors->any())
+                        @if(isset($errors) && $errors->any())
                             <div style="color: #c53030; background-color: #fff5f5; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
                                 <ul style="margin: 0; padding-left: 20px;">
                                     @foreach($errors->all() as $error)
