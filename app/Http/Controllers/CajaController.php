@@ -69,6 +69,8 @@ class CajaController extends Controller
             'products' => 'nullable|array',
             'payment_method' => 'nullable|string',
             'cash_received' => 'nullable|numeric|min:0',
+            'card_number' => 'nullable|string',
+            'cvv' => 'nullable|string',
             'tipo_comprobante' => 'required|in:boleta,factura',
             'documento_cliente' => 'nullable|digits_between:8,11',
             'nombres_apellidos' => 'nullable|string|max:255',
@@ -122,6 +124,23 @@ class CajaController extends Controller
 
             $cashReceived = (float) $request->input('cash_received');
             $cashChange = round($cashReceived - $total, 2);
+        }
+
+        if ($paymentMethod === 'tarjeta') {
+            $request->merge([
+                'card_number' => preg_replace('/\D/', '', (string) $request->input('card_number')),
+                'cvv' => preg_replace('/\D/', '', (string) $request->input('cvv')),
+            ]);
+
+            $request->validate([
+                'card_number' => 'required|digits:16',
+                'cvv' => 'required|digits_between:3,4',
+            ], [
+                'card_number.required' => 'Ingresa el numero de tarjeta.',
+                'card_number.digits' => 'El numero de tarjeta debe tener 16 digitos.',
+                'cvv.required' => 'Ingresa el CVV de la tarjeta.',
+                'cvv.digits_between' => 'El CVV debe tener 3 o 4 digitos.',
+            ]);
         }
 
         $clienteId = null;

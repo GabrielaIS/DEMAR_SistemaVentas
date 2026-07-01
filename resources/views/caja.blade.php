@@ -481,6 +481,36 @@
             font-weight: 900;
         }
 
+        .tarjeta-box {
+            display: none;
+            grid-template-columns: minmax(0, 1fr) 82px;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid rgba(40, 122, 122, 0.22);
+            border-radius: 8px;
+            background: #f4fbf9;
+        }
+
+        .tarjeta-box.active {
+            display: grid;
+        }
+
+        .tarjeta-box > div {
+            min-width: 0;
+        }
+
+        .tarjeta-box label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--mid);
+            font-size: 0.82rem;
+            font-weight: 900;
+        }
+
+        .tarjeta-box input {
+            width: 100%;
+        }
+
         .segmented {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -719,6 +749,7 @@
             }
 
             .payment-methods,
+            .tarjeta-box,
             .field-grid,
             .receipt-actions {
                 grid-template-columns: 1fr;
@@ -941,6 +972,17 @@
                         <span>Escanea el QR para pagar con Yape</span>
                     </div>
 
+                    <div class="tarjeta-box" id="tarjetaBox">
+                        <div>
+                            <label for="card_number">Numero de tarjeta</label>
+                            <input id="card_number" name="card_number" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div>
+                            <label for="cvv">CVV</label>
+                            <input id="cvv" name="cvv" type="text" inputmode="numeric" autocomplete="cc-csc" placeholder="123">
+                        </div>
+                    </div>
+
                     <button class="btn-pay" type="submit">Pagar</button>
                 </aside>
             </div>
@@ -998,8 +1040,11 @@
     const razonInput = document.getElementById('razon_social');
     const cashBox = document.getElementById('cashBox');
     const yapeQrBox = document.getElementById('yapeQrBox');
+    const tarjetaBox = document.getElementById('tarjetaBox');
     const cashReceivedInput = document.getElementById('cash_received');
     const cashChange = document.getElementById('cashChange');
+    const cardNumberInput = document.getElementById('card_number');
+    const cvvInput = document.getElementById('cvv');
     const receiptOverlay = document.getElementById('receiptOverlay');
     const closeReceipt = document.getElementById('closeReceipt');
     const receiptSubtitle = document.getElementById('receiptSubtitle');
@@ -1344,9 +1389,18 @@
     function updateCashFlow() {
         const isCash = paymentMethodInput.value === 'efectivo';
         const isYapeQr = paymentMethodInput.value === 'qr-yape';
+        const isCard = paymentMethodInput.value === 'tarjeta';
         cashBox?.classList.toggle('active', isCash);
         yapeQrBox?.classList.toggle('active', isYapeQr);
+        tarjetaBox?.classList.toggle('active', isCard);
         setRequired(cashReceivedInput, isCash);
+        setRequired(cardNumberInput, isCard);
+        setRequired(cvvInput, isCard);
+
+        if (!isCard) {
+            if (cardNumberInput) cardNumberInput.value = '';
+            if (cvvInput) cvvInput.value = '';
+        }
 
         if (!cashReceivedInput || !cashChange) {
             return;
@@ -1409,6 +1463,13 @@
     searchInput?.addEventListener('input', applyFilters);
     categoryFilter?.addEventListener('change', applyFilters);
     documentInput?.addEventListener('input', updateCustomerFlow);
+    cardNumberInput?.addEventListener('input', () => {
+        const digits = cardNumberInput.value.replace(/\D/g, '').slice(0, 16);
+        cardNumberInput.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    });
+    cvvInput?.addEventListener('input', () => {
+        cvvInput.value = cvvInput.value.replace(/\D/g, '').slice(0, 4);
+    });
 
     documentTypes?.addEventListener('click', (event) => {
         const button = event.target.closest('.segment');
