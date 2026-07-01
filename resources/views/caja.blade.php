@@ -777,8 +777,9 @@
                             <input type="text" class="filter-input" placeholder="Buscar producto" id="searchProduct">
                             <select class="filter-select" id="categoryFilter">
                                 <option value="all">Todas las categorias</option>
-                                <option value="collar">Collares</option>
-                                <option value="pulsera">Pulseras</option>
+                                    @foreach($products->pluck('categoria')->filter()->unique()->sort() as $cat)
+                                        <option value="{{ mb_strtolower($cat, 'UTF-8') }}">{{ ucfirst($cat) }}</option>
+                                    @endforeach
                             </select>
                         </div>
                     </div>
