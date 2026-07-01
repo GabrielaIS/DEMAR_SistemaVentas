@@ -498,13 +498,12 @@
         }
 
         .chart-shell-inner {
-            min-width: min-content;
-            display: flex;
-            align-items: center;
+            display: block;
+            width: max-content;
         }
 
         .chart-shell svg {
-            width: 100%;
+            width: auto;
             height: auto;
             display: block;
             min-width: 760px;
@@ -518,6 +517,40 @@
 
         .report-table {
             margin-top: 16px;
+            overflow-x: auto;
+        }
+
+        .report-table table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 540px;
+            background: #fff;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(9, 25, 46, 0.08);
+            text-align: left;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .report-table th {
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 900;
+            background: rgba(78, 205, 196, 0.08);
+        }
+
+        .report-table td.money {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
         }
 
         .empty-state {
@@ -809,7 +842,7 @@
                             <h3>Ventas por producto</h3>
                             <span>Gráfico de barras con cantidad vendida y precio</span>
                         </div>
-                        <button class="btn-primary" type="button" onclick="window.print()">Exportar PDF</button>
+                        <button id="exportReportPdf" class="btn-primary" type="button">Exportar PDF</button>
                     </div>
 
                     @php $productosReporte = $productosReporte ?? collect(); @endphp
@@ -821,35 +854,35 @@
                             $maxPrecio = max($productosReporte->pluck('precio')->toArray());
                             $maxPrecio = $maxPrecio > 0 ? $maxPrecio : 1;
                             $maxCantidad = $maxCantidad > 0 ? $maxCantidad : 1;
+                            $chartProducts = $productosReporte->count();
+                            $chartWidth = max(760, 95 + ($chartProducts * 120) + 80);
+                            $xAxisEnd = $chartWidth - 70;
                         @endphp
                         <div class="chart-shell">
                             <div class="chart-shell-inner">
-                                <svg viewBox="0 0 760 340" role="img" aria-label="Gráfico de barras por producto">
-                                    <line x1="70" y1="285" x2="690" y2="285" stroke="#163352" stroke-width="2"></line>
+                                <svg viewBox="0 0 {{ $chartWidth }} 340" role="img" aria-label="Gráfico de barras por producto" style="min-width: {{ $chartWidth }}px;">
+                                    <line x1="70" y1="285" x2="{{ $xAxisEnd }}" y2="285" stroke="#163352" stroke-width="2"></line>
                                     <line x1="70" y1="40" x2="70" y2="285" stroke="#163352" stroke-width="2"></line>
 
                                     @for ($tick = 0; $tick <= 4; $tick++)
-                                        @php $priceValue = round(($maxPrecio / 4) * $tick, 2); @endphp
-                                        <line x1="70" y1="{{ 285 - ($tick * 55) }}" x2="690" y2="{{ 285 - ($tick * 55) }}" stroke="#dfe7e7" stroke-dasharray="4 4"></line>
-                                        <text x="40" y="{{ 289 - ($tick * 55) }}" font-size="11" fill="#6b7a8a" text-anchor="end">S/ {{ number_format($priceValue, 2, ',', '.') }}</text>
+                                        @php $priceValue = round(($maxPrecio / 4) * $tick, 2); $yPos = 285 - ($tick * 55); @endphp
+                                        <line x1="70" y1="{{ $yPos }}" x2="{{ $xAxisEnd }}" y2="{{ $yPos }}" stroke="#dfe7e7" stroke-dasharray="4 4"></line>
+                                        <text x="40" y="{{ $yPos + 4 }}" font-size="11" fill="#6b7a8a" text-anchor="end">S/ {{ number_format($priceValue, 2, ',', '.') }}</text>
                                     @endfor
 
-                                    @for ($tick = 0; $tick <= 4; $tick++)
-                                        @php $qtyValue = round(($maxCantidad / 4) * $tick, 0); @endphp
-                                        <text x="{{ 70 + ($tick * 155) }}" y="305" font-size="11" fill="#6b7a8a" text-anchor="middle">{{ $qtyValue }}</text>
-                                    @endfor
+                                    <text x="70" y="305" font-size="11" fill="#6b7a8a" text-anchor="middle">0</text>
+                                    <text x="{{ $xAxisEnd }}" y="305" font-size="11" fill="#6b7a8a" text-anchor="end">{{ $maxCantidad }}</text>
 
                                     @foreach($productosReporte as $index => $producto)
                                         @php
-                                            $barWidth = 24 + (($producto['cantidad'] / $maxCantidad) * 90);
+                                            $barWidth = 70;
                                             $barHeight = 25 + (($producto['precio'] / $maxPrecio) * 180);
-                                            $x = 95 + ($index * 110);
+                                            $x = 95 + ($index * 120);
                                             $y = 285 - $barHeight;
                                         @endphp
-                                        <rect x="{{ $x }}" y="{{ $y }}" width="70" height="{{ $barHeight }}" rx="10" fill="#4ecdc4"></rect>
-                                        <text x="{{ $x + 35 }}" y="{{ $y - 8 }}" font-size="12" fill="#163352" text-anchor="middle">{{ 
-                                            Illuminate\Support\Str::limit($producto['nombre'], 12) }}</text>
-                                        <text x="{{ $x + 35 }}" y="{{ 300 }}" font-size="11" fill="#6b7a8a" text-anchor="middle">Cant. {{ $producto['cantidad'] }}</text>
+                                        <rect x="{{ $x }}" y="{{ $y }}" width="{{ $barWidth }}" height="{{ $barHeight }}" rx="10" fill="#4ecdc4"></rect>
+                                        <text x="{{ $x + ($barWidth / 2) }}" y="{{ $y - 8 }}" font-size="12" fill="#163352" text-anchor="middle">{{ Illuminate\Support\Str::limit($producto['nombre'], 14) }}</text>
+                                        <text x="{{ $x + ($barWidth / 2) }}" y="300" font-size="11" fill="#6b7a8a" text-anchor="middle">Cant. {{ $producto['cantidad'] }}</text>
                                     @endforeach
                                 </svg>
                             </div>
@@ -863,7 +896,7 @@
                                         <th>Producto</th>
                                         <th>Cantidad</th>
                                         <th>Precio</th>
-                                        <th>Total</th>
+                                        <th>Total vendido</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1244,6 +1277,106 @@
                 this.style.color = '#718096';      
             }
         });
+    });
+
+    @php
+        $pdfReportRows = $productosReporte->map(function ($producto) {
+            return [
+                'nombre' => $producto['nombre'],
+                'cantidad' => $producto['cantidad'],
+                'precio' => number_format($producto['precio'], 2, ',', '.'),
+                'total' => number_format($producto['total'], 2, ',', '.'),
+            ];
+        })->values();
+    @endphp
+
+    const pdfReportRows = @json($pdfReportRows);
+
+    async function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+            document.body.appendChild(script);
+        });
+    }
+
+    async function ensurePdfLibraries() {
+        if (!window.jspdf) {
+            await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+        }
+
+        const jsPDFClass = window.jspdf?.jsPDF || window.jspdf;
+        if (!jsPDFClass) {
+            throw new Error('No se cargó correctamente la librería jsPDF.');
+        }
+
+        return jsPDFClass;
+    }
+
+    document.getElementById('exportReportPdf')?.addEventListener('click', async () => {
+        const button = document.getElementById('exportReportPdf');
+        button.disabled = true;
+        button.textContent = 'Generando PDF...';
+
+        try {
+            const jsPDFClass = await ensurePdfLibraries();
+            const doc = new jsPDFClass('portrait', 'pt', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 40;
+            const title = 'Reportes de ventas por productos de la tienda Demar';
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text(title, margin, 50);
+
+            const headers = ['Producto', 'Cantidad', 'Precio', 'Total vendido'];
+            const columnWidths = [240, 80, 100, 120];
+            let y = 80;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+
+            let x = margin;
+            headers.forEach((header, index) => {
+                doc.text(header, x + 2, y);
+                x += columnWidths[index];
+            });
+
+            doc.setDrawColor(200);
+            doc.setLineWidth(0.5);
+            doc.line(margin, y + 4, margin + columnWidths.reduce((sum, width) => sum + width, 0), y + 4);
+            y += 18;
+            doc.setFont('helvetica', 'normal');
+
+            pdfReportRows.forEach((row) => {
+                if (y + 30 > doc.internal.pageSize.getHeight() - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+
+                const nameLines = doc.splitTextToSize(row.nombre, columnWidths[0] - 8);
+                const rowHeight = Math.max(14, nameLines.length * 14);
+
+                x = margin;
+                doc.text(nameLines, x + 2, y + rowHeight - 4);
+                x += columnWidths[0];
+                doc.text(String(row.cantidad), x + 2, y + rowHeight - 4);
+                x += columnWidths[1];
+                doc.text(`S/ ${row.precio}`, x + 2, y + rowHeight - 4);
+                x += columnWidths[2];
+                doc.text(`S/ ${row.total}`, x + 2, y + rowHeight - 4);
+
+                y += rowHeight + 8;
+            });
+
+            doc.save('reporte-productos.pdf');
+        } catch (error) {
+            console.error(error);
+            alert('Ocurrió un error al crear el PDF. Intenta de nuevo.');
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Exportar PDF';
+        }
     });
 
     // 2. LÓGICA DE CONTROL DEL MODAL (EDITAR)
