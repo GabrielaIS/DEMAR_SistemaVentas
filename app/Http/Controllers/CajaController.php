@@ -73,6 +73,7 @@ class CajaController extends Controller
             'documento_cliente' => 'nullable|digits_between:8,11',
             'nombres_apellidos' => 'nullable|string|max:255',
             'razon_social' => 'nullable|string|max:255',
+            'telefono_comprobante' => 'nullable|string|max:30',
             'telefono' => 'nullable|string|max:30',
             'telefono_juridico' => 'nullable|string|max:30',
         ]);
@@ -126,6 +127,7 @@ class CajaController extends Controller
 
         $clienteId = null;
         $tipoComprobante = $request->input('tipo_comprobante', 'boleta');
+        $telefonoEnvio = null;
 
         if ($total > 700) {
             $documento = (string) $request->input('documento_cliente');
@@ -181,6 +183,14 @@ class CajaController extends Controller
 
                 $clienteId = $cliente->id;
             }
+        } else {
+            $data = $request->validate([
+                'telefono_comprobante' => 'required|string|max:30',
+            ], [
+                'telefono_comprobante.required' => 'Ingresa el celular para enviar el comprobante por WhatsApp.',
+            ]);
+
+            $telefonoEnvio = $data['telefono_comprobante'];
         }
 
         $venta = DB::transaction(function () use ($clienteId, $items, $total, $tipoComprobante, $paymentMethod, $productsToUpdate) {
@@ -232,6 +242,7 @@ class CajaController extends Controller
                 'numero' => str_pad((string) $venta->id, 6, '0', STR_PAD_LEFT),
                 'tipo_comprobante' => $tipoComprobante,
                 'cliente' => $receiptClient,
+                'telefono_envio' => $telefonoEnvio,
                 'items' => $items,
                 'total' => $total,
                 'metodo_pago' => $paymentMethod,

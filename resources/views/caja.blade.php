@@ -870,7 +870,7 @@
                             <span id="checkoutTax">S/ 0.00</span>
                         </div>
                         <div class="summary-row checkout-total">
-                            <span>Total</span>
+                            <span>Total En Soles</span>
                             <span id="checkoutTotal">S/ 0.00</span>
                         </div>
                     </div>
@@ -885,7 +885,14 @@
                     </div>
 
                     <div class="customer-section" id="customerSection">
-                        <div>
+                        <div class="new-client-fields" id="phoneOnlyFields">
+                            <div>
+                                <label for="telefono_comprobante">Celular para WhatsApp</label>
+                                <input id="telefono_comprobante" name="telefono_comprobante" type="text" inputmode="numeric" maxlength="15" placeholder="Numero celular">
+                            </div>
+                        </div>
+
+                        <div id="documentCustomerFields">
                             <label for="documento_cliente" id="documentLabel">DNI</label>
                             <input id="documento_cliente" name="documento_cliente" type="text" inputmode="numeric" maxlength="8" placeholder="Buscar por DNI">
                         </div>
@@ -986,6 +993,9 @@
     const documentTypes = document.getElementById('documentTypes');
     const documentTypeInput = document.getElementById('tipo_comprobante');
     const customerSection = document.getElementById('customerSection');
+    const phoneOnlyFields = document.getElementById('phoneOnlyFields');
+    const documentCustomerFields = document.getElementById('documentCustomerFields');
+    const telefonoComprobanteInput = document.getElementById('telefono_comprobante');
     const documentInput = document.getElementById('documento_cliente');
     const documentLabel = document.getElementById('documentLabel');
     const customerHint = document.getElementById('customerHint');
@@ -1049,6 +1059,10 @@
     }
 
     function getReceiptPhone(receipt) {
+        if (receipt?.telefono_envio) {
+            return sanitizePhone(receipt.telefono_envio);
+        }
+
         if (!receipt?.cliente) {
             return '';
         }
@@ -1251,6 +1265,8 @@
         foundClient.textContent = '';
         naturalFields.classList.remove('active');
         juridicoFields.classList.remove('active');
+        phoneOnlyFields.classList.remove('active');
+        setRequired(telefonoComprobanteInput, false);
         setRequired(nombresInput, false);
         setRequired(telefonoInput, false);
         setRequired(telefonoJuridicoInput, false);
@@ -1258,24 +1274,31 @@
     }
 
     function updateCustomerFlow() {
-        const requiresCustomer = currentTotal > 700;
+        const requiresCustomer = currentTotal > 70;
+        const hasSaleAmount = currentTotal > 0;
         const type = selectedDocumentType();
         const clients = type === 'boleta' ? naturalClients : juridicoClients;
         const expectedLength = type === 'boleta' ? 8 : 11;
         const label = type === 'boleta' ? 'DNI' : 'RUC';
 
-        customerSection.classList.toggle('active', requiresCustomer);
+        customerSection.classList.toggle('active', hasSaleAmount);
+        documentCustomerFields.style.display = requiresCustomer ? '' : 'none';
         documentLabel.textContent = label;
         documentInput.placeholder = `Buscar por ${label}`;
         documentInput.maxLength = expectedLength;
-        customerHint.textContent = `Para montos mayores a S/ 700 se requiere ${label} de ${type === 'boleta' ? 'persona natural' : 'persona juridica'}.`;
         setRequired(documentInput, requiresCustomer);
 
         resetCustomerFields();
 
         if (!requiresCustomer) {
+            documentInput.value = '';
+            customerHint.textContent = 'Para montos de hasta S/ 700 ingresa solo el celular para enviar la boleta por WhatsApp.';
+            phoneOnlyFields.classList.toggle('active', hasSaleAmount);
+            setRequired(telefonoComprobanteInput, hasSaleAmount);
             return;
         }
+
+        customerHint.textContent = `Para montos mayores a S/ 700 se requiere ${label} de ${type === 'boleta' ? 'persona natural' : 'persona juridica'}.`;
 
         documentInput.value = documentInput.value.replace(/\D/g, '').slice(0, expectedLength);
         const documentValue = documentInput.value;
