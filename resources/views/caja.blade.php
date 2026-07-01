@@ -798,7 +798,7 @@
                         <div class="toolbar-header">
                             <div>
                                 <div class="kicker">Venta en caja</div>
-                                <h2>A LLEVAR</h2>
+                                <h2>PRODUCTOS</h2>
                                 <p>Agrega cantidades y revisa el checkout antes de pagar.</p>
                             </div>
                             <div class="product-count">{{ $products->count() }} productos</div>
@@ -901,7 +901,7 @@
                             <span id="checkoutTax">S/ 0.00</span>
                         </div>
                         <div class="summary-row checkout-total">
-                            <span>Total En Soles</span>
+                            <span>Total</span>
                             <span id="checkoutTotal">S/ 0.00</span>
                         </div>
                     </div>
