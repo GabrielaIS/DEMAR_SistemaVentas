@@ -767,7 +767,7 @@
                         <div class="toolbar-header">
                             <div>
                                 <div class="kicker">Venta en caja</div>
-                                <h2>Selecciona productos</h2>
+                                <h2>A LLEVAR</h2>
                                 <p>Agrega cantidades y revisa el checkout antes de pagar.</p>
                             </div>
                             <div class="product-count">{{ $products->count() }} productos</div>
