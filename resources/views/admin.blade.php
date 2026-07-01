@@ -945,15 +945,15 @@
                         <span class="pill">Inventario</span>
                     </div>
                     <div class="filters">
-                        <input type="search" placeholder="Buscar producto">
-                        <select>
-                            <option>Todas las categorias</option>
-                            <option>Collares</option>
-                            <option>Pulseras</option>
+                        <input id="buscarProductoAdmin" type="search" placeholder="Buscar producto">
+                        <select id="filtrarCategoriaAdmin">
+                            <option value="all">Todas las categorias</option>
+                            <option value="collar">Collares</option>
+                            <option value="pulsera">Pulseras</option>
                         </select>
                     </div>
                     <div class="table-wrap">
-                        <table>
+                        <table id="tablaProductosAdmin">
                             <thead>
                                 <tr>
                                     <th>Producto</th>
@@ -965,7 +965,9 @@
                             </thead>
                             <tbody>
                                 @forelse($productos as $producto)
-                                    <tr>
+                                    <tr class="producto-admin-row"
+                                        data-nombre="{{ Illuminate\Support\Str::lower($producto->nombre) }}"
+                                        data-categoria="{{ Illuminate\Support\Str::lower($producto->categoria ?? '') }}">
                                         <td>
                                             <div class="product-cell">
                                                 <img src="{{ asset($producto->imagen ?? 'Logo.png') }}" alt="{{ $producto->nombre }}">
@@ -998,6 +1000,9 @@
                                 @empty
                                     <tr><td colspan="5">Aún no hay productos registrados.</td></tr>
                                 @endforelse
+                                <tr id="productosAdminSinResultados" style="display: none;">
+                                    <td colspan="5">No se encontraron productos con ese filtro.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1259,6 +1264,38 @@
     const iconoOjoAbierto = `<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
     const iconoOjoCerrado = `<svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.43-1.47.68-2.33.68-2.76 0-5-2.24-5-5 0-.86.25-1.66.68-2.33zM11.84 8.5l2.6 2.6c-.05-.2-.14-.39-.28-.53-.14-.14-.33-.23-.53-.28L11.84 8.5z"/></svg>`;
 
+    const buscarProductoAdmin = document.getElementById('buscarProductoAdmin');
+    const filtrarCategoriaAdmin = document.getElementById('filtrarCategoriaAdmin');
+    const productosAdminRows = document.querySelectorAll('.producto-admin-row');
+    const productosAdminSinResultados = document.getElementById('productosAdminSinResultados');
+
+    function filtrarProductosAdmin() {
+        const busqueda = (buscarProductoAdmin?.value || '').trim().toLowerCase();
+        const categoria = filtrarCategoriaAdmin?.value || 'all';
+        let visibles = 0;
+
+        productosAdminRows.forEach(row => {
+            const nombre = row.dataset.nombre || '';
+            const categoriaProducto = row.dataset.categoria || '';
+            const coincideBusqueda = nombre.includes(busqueda);
+            const coincideCategoria = categoria === 'all' || categoriaProducto === categoria;
+            const mostrar = coincideBusqueda && coincideCategoria;
+
+            row.style.display = mostrar ? '' : 'none';
+            if (mostrar) {
+                visibles++;
+            }
+        });
+
+        if (productosAdminSinResultados) {
+            productosAdminSinResultados.style.display = visibles === 0 && productosAdminRows.length > 0 ? '' : 'none';
+        }
+    }
+
+    buscarProductoAdmin?.addEventListener('input', filtrarProductosAdmin);
+    filtrarCategoriaAdmin?.addEventListener('change', filtrarProductosAdmin);
+    filtrarProductosAdmin();
+
     
     document.querySelectorAll('.toggle-password').forEach(button => {
         button.innerHTML = iconoOjoCerrado;
@@ -1417,5 +1454,3 @@
 </script>
 </body>
 </html>
-
-
