@@ -9,6 +9,7 @@ use App\Models\Venta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class CajaController extends Controller
 {
@@ -47,6 +48,86 @@ class CajaController extends Controller
             'clientesNaturalesJson',
             'clientesJuridicosJson'
         ));
+    }
+
+    public function consultarDocumento(Request $request)
+    {
+        if (! Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'No autenticado.'], 401);
+        }
+
+        if ((Auth::user()->rol ?? null) !== 'cajero') {
+            return response()->json(['success' => false, 'message' => 'Acceso denegado.'], 403);
+        }
+
+        $request->validate([
+            'documento_cliente' => 'required|string',
+            'tipo_comprobante' => 'required|in:boleta,factura',
+        ]);
+
+        $tipo = $request->input('tipo_comprobante');
+        $documento = preg_replace('/\D/', '', (string) $request->input('documento_cliente'));
+
+        try {
+            $apiKey = env('APIINTI_API_KEY');
+            if (! $apiKey) {
+                return response()->json(['success' => false, 'message' => 'API key no configurada.'], 500);
+            }
+
+            if ($tipo === 'boleta') {
+                if (strlen($documento) !== 8) {
+                    return response()->json(['success' => false, 'message' => 'DNI inválido.'], 400);
+                }
+
+                $resp = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                ])->accept('application/json')
+                  ->get("https://app.apiinti.dev/api/v1/dni/{$documento}");
+
+                if (! $resp->ok()) {
+                    return response()->json(['success' => false, 'message' => 'No se pudo consultar DNI.'], $resp->status());
+                }
+
+                $body = $resp->json();
+                $name = $body['data']['nombreCompleto'] ?? null;
+                if (! $name && isset($body['data']['nombres'])) {
+                    $name = trim(($body['data']['apellidoPaterno'] ?? '') . ' ' . ($body['data']['apellidoMaterno'] ?? '') . ' ' . ($body['data']['nombres'] ?? ''));
+                }
+
+                return response()->json(['success' => true, 'data' => ['nombre' => $name ?? '']]);
+            }
+
+            // factura -> RUC
+            if ($tipo === 'factura') {
+                if (strlen($documento) !== 11) {
+                    return response()->json(['success' => false, 'message' => 'RUC inválido.'], 400);
+                }
+
+                $resp = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                ])->accept('application/json')
+                  ->get("https://app.apiinti.dev/api/v1/ruc/{$documento}");
+
+                if (! $resp->ok()) {
+                    return response()->json(['success' => false, 'message' => 'No se pudo consultar RUC.'], $resp->status());
+                }
+
+                $body = $resp->json();
+                $razon = $body['data']['razonSocial'] ?? ($body['data']['razon_social'] ?? '');
+                $direccion = $body['data']['direccion'] ?? '';
+                $estado = $body['data']['estado'] ?? '';
+
+                return response()->json(['success' => true, 'data' => [
+                    'razon_social' => $razon,
+                    'direccion' => $direccion,
+                    'estado' => $estado,
+                ]]);
+            }
+
+            return response()->json(['success' => false, 'message' => 'Tipo de comprobante no soportado.'], 400);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error interno: '.$e->getMessage()], 500);
+        }
     }
 
     public function vender(Request $request)
